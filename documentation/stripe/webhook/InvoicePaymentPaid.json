@@ -1,0 +1,35 @@
+{
+    "id": "evt_1U71vqH1ivQZM308KVrqO0da",
+    "object": "event",
+    "api_version": "2026-07-29.dahlia",
+    "created": 1787355186,
+    "data": {
+        "object": {
+            "id": "inpay_1U71vHH1ivQZM308u6EJ0Gaw",
+            "object": "invoice_payment",
+            "amount_paid": 1500,
+            "amount_requested": 1500,
+            "created": 1787355151,
+            "currency": "usd",
+            "invoice": "in_1U71vHH1ivQZM308YkCHRjd3",
+            "is_default": true,
+            "livemode": false,
+            "payment": {
+                "payment_intent": "pi_3U71vHH1ivQZM3081CXoRQVf",
+                "type": "payment_intent"
+            },
+            "status": "paid",
+            "status_transitions": {
+                "canceled_at": null,
+                "paid_at": 1787355152
+            }
+        }
+    },
+    "livemode": false,
+    "pending_webhooks": 2,
+    "request": {
+        "id": null,
+        "idempotency_key": null
+    },
+    "type": "invoice_payment.paid"
+}

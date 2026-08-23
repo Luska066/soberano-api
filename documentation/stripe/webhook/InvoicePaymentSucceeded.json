@@ -1,0 +1,167 @@
+[
+    {
+        "id": "evt_1U72ekH1ivQZM308fPxcH45A",
+        "object": "event",
+        "api_version": "2026-07-29.dahlia",
+        "created": 1787357970,
+        "data": {
+            "object": {
+                "id": "in_1U72ZLH1ivQZM308s2W3Vozi",
+                "object": "invoice",
+                "account_country": "BR",
+                "account_name": "LumeraTi sandbox",
+                "account_tax_ids": null,
+                "amount_due": 1500,
+                "amount_overpaid": 0,
+                "amount_paid": 1500,
+                "amount_remaining": 0,
+                "amount_shipping": 0,
+                "application": null,
+                "attempt_count": 0,
+                "attempted": false,
+                "auto_advance": false,
+                "automatic_tax": {
+                    "disabled_reason": null,
+                    "enabled": false,
+                    "liability": null,
+                    "provider": null,
+                    "status": null
+                },
+                "automatically_finalizes_at": null,
+                "billing_reason": "subscription_create",
+                "collection_method": "send_invoice",
+                "created": 1787357401,
+                "currency": "usd",
+                "custom_fields": null,
+                "customer": "cus_V7FZUw6VpUY0bR",
+                "customer_account": null,
+                "customer_address": null,
+                "customer_email": "lucas.santsena@gmail.com",
+                "customer_name": "Lucas Sena",
+                "customer_phone": null,
+                "customer_shipping": null,
+                "customer_tax_exempt": "none",
+                "customer_tax_ids": [],
+                "default_payment_method": null,
+                "default_source": null,
+                "default_tax_rates": [],
+                "description": null,
+                "discounts": [],
+                "due_date": 1789949401,
+                "effective_at": 1787361001,
+                "ending_balance": 0,
+                "footer": null,
+                "from_invoice": null,
+                "hosted_invoice_url": "https://invoice.stripe.com/i/acct_1U6JxRH1ivQZM308/test_YWNjdF8xVTZKeFJIMWl2UVpNMzA4LF9WN0g3VkRaUmRMRHNSUjhucFZOU3JhQURieTVzQVBELDE3Nzg5ODc3MA0200Mey41812?s=ap",
+                "invoice_pdf": "https://pay.stripe.com/invoice/acct_1U6JxRH1ivQZM308/test_YWNjdF8xVTZKeFJIMWl2UVpNMzA4LF9WN0g3VkRaUmRMRHNSUjhucFZOU3JhQURieTVzQVBELDE3Nzg5ODc3MA0200Mey41812/pdf?s=ap",
+                "issuer": {
+                    "type": "self"
+                },
+                "last_finalization_error": null,
+                "latest_revision": null,
+                "lines": {
+                    "object": "list",
+                    "data": [
+                        {
+                            "id": "il_1U72VZH1ivQZM30877xveDSq",
+                            "object": "line_item",
+                            "amount": 1500,
+                            "currency": "usd",
+                            "description": "1 × SOBERANO BASIC (at $15.00 / month)",
+                            "discount_amounts": [],
+                            "discountable": true,
+                            "discounts": [],
+                            "invoice": "in_1U72ZLH1ivQZM308s2W3Vozi",
+                            "livemode": false,
+                            "metadata": [],
+                            "parent": {
+                                "invoice_item_details": null,
+                                "subscription_item_details": {
+                                    "invoice_item": null,
+                                    "proration": false,
+                                    "proration_details": {
+                                        "credited_items": "Over 9 levels deep, aborting normalization"
+                                    },
+                                    "subscription": "sub_1U72ZLH1ivQZM308LShhxmwC",
+                                    "subscription_item": "si_V7H74RQniRc87H"
+                                },
+                                "type": "subscription_item_details"
+                            },
+                            "period": {
+                                "end": 1790035801,
+                                "start": 1787357401
+                            },
+                            "pretax_credit_amounts": [],
+                            "pricing": {
+                                "price_details": {
+                                    "price": "price_1U70aOH1ivQZM308IVVA0KBC",
+                                    "product": "prod_V7F4Ql9ZkVZrip"
+                                },
+                                "type": "price_details",
+                                "unit_amount_decimal": "1500"
+                            },
+                            "quantity": 1,
+                            "quantity_decimal": "1",
+                            "subtotal": 1500,
+                            "taxes": []
+                        }
+                    ],
+                    "has_more": false,
+                    "total_count": 1,
+                    "url": "/v1/invoices/in_1U72ZLH1ivQZM308s2W3Vozi/lines"
+                },
+                "livemode": false,
+                "metadata": [],
+                "next_payment_attempt": null,
+                "number": "SX0QDFSR-0002",
+                "on_behalf_of": null,
+                "parent": {
+                    "quote_details": null,
+                    "subscription_details": {
+                        "metadata": [],
+                        "subscription": "sub_1U72ZLH1ivQZM308LShhxmwC"
+                    },
+                    "type": "subscription_details"
+                },
+                "payment_settings": {
+                    "default_mandate": null,
+                    "payment_method_options": null,
+                    "payment_method_types": null
+                },
+                "period_end": 1787357401,
+                "period_start": 1787357401,
+                "post_payment_credit_notes_amount": 0,
+                "pre_payment_credit_notes_amount": 0,
+                "receipt_number": null,
+                "rendering": null,
+                "shipping_cost": null,
+                "shipping_details": null,
+                "starting_balance": 0,
+                "statement_descriptor": null,
+                "status": "paid",
+                "status_transitions": {
+                    "finalized_at": 1787361001,
+                    "marked_uncollectible_at": null,
+                    "paid_at": 1787361001,
+                    "voided_at": null
+                },
+                "subtotal": 1500,
+                "subtotal_excluding_tax": 1500,
+                "test_clock": "clock_1U72VYH1ivQZM308AqbAn6Fv",
+                "total": 1500,
+                "total_discount_amounts": [],
+                "total_excluding_tax": 1500,
+                "total_pretax_credit_amounts": [],
+                "total_taxes": [],
+                "webhooks_delivered_at": 1787357401
+            }
+        },
+        "livemode": false,
+        "pending_webhooks": 2,
+        "request": {
+            "id": "req_RjmHFU65LAHFP1",
+            "idempotency_key": "cfcd0ac9-6306-4dca-8158-d7978de80a4c"
+        },
+        "type": "invoice.payment_succeeded"
+    }
+]

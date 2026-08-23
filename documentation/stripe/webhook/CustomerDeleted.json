@@ -1,0 +1,45 @@
+{
+    "id": "evt_1U71EZH1ivQZM308GowXrcbR",
+    "object": "event",
+    "api_version": "2026-07-29.dahlia",
+    "created": 1787352503,
+    "data": {
+        "object": {
+            "id": "cus_V7FTjnWMthAYr5",
+            "object": "customer",
+            "address": null,
+            "balance": 0,
+            "created": 1787351506,
+            "currency": null,
+            "customer_account": null,
+            "default_source": null,
+            "delinquent": false,
+            "description": "(created by Stripe CLI)",
+            "discount": null,
+            "email": null,
+            "invoice_prefix": "KPAZ6UNE",
+            "invoice_settings": {
+                "custom_fields": null,
+                "default_payment_method": null,
+                "footer": null,
+                "rendering_options": null
+            },
+            "livemode": false,
+            "metadata": [],
+            "name": null,
+            "next_invoice_sequence": 1,
+            "phone": null,
+            "preferred_locales": [],
+            "shipping": null,
+            "tax_exempt": "none",
+            "test_clock": null
+        }
+    },
+    "livemode": false,
+    "pending_webhooks": 2,
+    "request": {
+        "id": "req_8g8HYUK1QfvkWo",
+        "idempotency_key": null
+    },
+    "type": "customer.deleted"
+}

@@ -1,0 +1,38 @@
+{
+    "id": "evt_1U71vFH1ivQZM308ItG8I02F",
+    "object": "event",
+    "api_version": "2026-07-29.dahlia",
+    "created": 1787355149,
+    "data": {
+        "object": {
+            "id": "prod_V7GSNftmNsmdHT",
+            "object": "product",
+            "active": true,
+            "attributes": [],
+            "created": 1787355149,
+            "default_price": null,
+            "description": "(created by Stripe CLI)",
+            "images": [],
+            "livemode": false,
+            "marketing_features": [],
+            "metadata": [],
+            "name": "myproduct",
+            "package_dimensions": null,
+            "shippable": null,
+            "statement_descriptor": null,
+            "tax_code": null,
+            "tax_details": null,
+            "type": "service",
+            "unit_label": null,
+            "updated": 1787355149,
+            "url": null
+        }
+    },
+    "livemode": false,
+    "pending_webhooks": 2,
+    "request": {
+        "id": "req_PFTsqHjC7Od7or",
+        "idempotency_key": "74d4ad9c-2859-4ef3-8ecf-5af41d949571"
+    },
+    "type": "product.created"
+}

@@ -1,0 +1,78 @@
+{
+    "id": "evt_3U71vHH1ivQZM3081RQVBpwC",
+    "object": "event",
+    "api_version": "2026-07-29.dahlia",
+    "created": 1787355152,
+    "data": {
+        "object": {
+            "id": "pi_3U71vHH1ivQZM3081CXoRQVf",
+            "object": "payment_intent",
+            "allowed_payment_method_types": null,
+            "amount": 1500,
+            "amount_capturable": 0,
+            "amount_details": {
+                "tip": []
+            },
+            "amount_received": 1500,
+            "application": null,
+            "application_fee_amount": null,
+            "automatic_payment_methods": null,
+            "canceled_at": null,
+            "cancellation_reason": null,
+            "capture_method": "automatic",
+            "client_secret": "pi_3U71vHH1ivQZM3081CXoRQVf_secret_7rZhOrKMdmMkyIi6C40waDxCW",
+            "confirmation_method": "automatic",
+            "created": 1787355151,
+            "currency": "usd",
+            "customer": "cus_V7GSdJ18lb7TF6",
+            "customer_account": null,
+            "description": "Subscription creation",
+            "excluded_payment_method_types": null,
+            "last_payment_error": null,
+            "latest_charge": "ch_3U71vHH1ivQZM3081yQqMelK",
+            "livemode": false,
+            "managed_payments": {
+                "enabled": false
+            },
+            "metadata": [],
+            "next_action": null,
+            "on_behalf_of": null,
+            "payment_details": {
+                "customer_reference": null,
+                "order_reference": "in_1U71vHH1ivQZM308YkCHRjd3"
+            },
+            "payment_method": "pm_1U71vEH1ivQZM308tni9V1Sk",
+            "payment_method_configuration_details": null,
+            "payment_method_options": {
+                "card": {
+                    "installments": null,
+                    "mandate_options": null,
+                    "network": null,
+                    "request_three_d_secure": "automatic"
+                }
+            },
+            "payment_method_types": [
+                "card"
+            ],
+            "processing": null,
+            "receipt_email": null,
+            "review": null,
+            "setup_future_usage": "off_session",
+            "shared_payment_granted_token": null,
+            "shipping": null,
+            "source": null,
+            "statement_descriptor": null,
+            "statement_descriptor_suffix": null,
+            "status": "succeeded",
+            "transfer_data": null,
+            "transfer_group": null
+        }
+    },
+    "livemode": false,
+    "pending_webhooks": 2,
+    "request": {
+        "id": "req_nbuZoXMalH90QT",
+        "idempotency_key": "1b68a6d4-3abe-416e-aaa7-8a35c2a91d51"
+    },
+    "type": "payment_intent.succeeded"
+}

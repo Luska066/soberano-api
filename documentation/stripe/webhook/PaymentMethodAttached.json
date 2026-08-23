@@ -1,0 +1,68 @@
+{
+    "id": "evt_1U71vFH1ivQZM308UgsdYLOx",
+    "object": "event",
+    "api_version": "2026-07-29.dahlia",
+    "created": 1787355149,
+    "data": {
+        "object": {
+            "id": "pm_1U71vEH1ivQZM308tni9V1Sk",
+            "object": "payment_method",
+            "allow_redisplay": "unspecified",
+            "billing_details": {
+                "address": {
+                    "city": null,
+                    "country": null,
+                    "line1": null,
+                    "line2": null,
+                    "postal_code": null,
+                    "state": null
+                },
+                "email": null,
+                "name": null,
+                "phone": null,
+                "tax_id": null
+            },
+            "card": {
+                "brand": "visa",
+                "checks": {
+                    "address_line1_check": null,
+                    "address_postal_code_check": null,
+                    "cvc_check": "pass"
+                },
+                "country": "US",
+                "display_brand": "visa",
+                "exp_month": 8,
+                "exp_year": 2027,
+                "fingerprint": "4B9uMuQrV8eJatyz",
+                "funding": "credit",
+                "generated_from": null,
+                "last4": "4242",
+                "networks": {
+                    "available": [
+                        "visa"
+                    ],
+                    "preferred": null
+                },
+                "regulated_status": "unregulated",
+                "three_d_secure_usage": {
+                    "supported": true
+                },
+                "wallet": null
+            },
+            "created": 1787355148,
+            "customer": "cus_V7GSdJ18lb7TF6",
+            "customer_account": null,
+            "livemode": false,
+            "metadata": [],
+            "shared_payment_granted_token": null,
+            "type": "card"
+        }
+    },
+    "livemode": false,
+    "pending_webhooks": 2,
+    "request": {
+        "id": "req_9NGzhZThDJcsJr",
+        "idempotency_key": "e6e87129-1505-4067-bc33-cfb62f9a2e0b"
+    },
+    "type": "payment_method.attached"
+}
