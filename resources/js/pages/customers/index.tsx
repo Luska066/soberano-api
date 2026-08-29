@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     Building2,
     Check,
@@ -12,6 +12,7 @@ import {
     MapPin,
     Phone,
     Plus,
+    Receipt,
     RefreshCw,
     Search,
     Trash2,
@@ -129,6 +130,7 @@ export default function CustomersIndex({
     const createForm = useForm({
         name: '',
         email: '',
+        password: '',
         phone: '',
         country_code: '+55',
         country: 'BR',
@@ -143,6 +145,7 @@ export default function CustomersIndex({
     const editForm = useForm({
         name: '',
         email: '',
+        password: '',
         phone: '',
         country_code: '+55',
         country: 'BR',
@@ -284,6 +287,7 @@ export default function CustomersIndex({
         editForm.setData({
             name: customer.name || '',
             email: customer.email || '',
+            password: '',
             phone: maskedPhone,
             country_code: customer.country_code || '+55',
             country: countryValue,
@@ -660,6 +664,13 @@ export default function CustomersIndex({
                                                     {/* Ações */}
                                                     <td className="px-5 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-1.5">
+                                                            <Link
+                                                                href={`/customers/${customer.uuid}`}
+                                                                className="flex size-8 items-center justify-center rounded-md text-[#7a84a0] transition hover:bg-[#c9a227]/15 hover:text-[#c9a227]"
+                                                                title="Gerenciar Assinaturas e Faturas"
+                                                            >
+                                                                <Receipt className="size-4" />
+                                                            </Link>
                                                             <Button
                                                                 onClick={() => handleOpenView(customer)}
                                                                 size="sm"
@@ -811,6 +822,11 @@ export default function CustomersIndex({
                     </DialogHeader>
 
                     <form onSubmit={handleCreateSubmit} className="space-y-4 pt-2">
+                        {createForm.errors.general && (
+                            <div className="rounded-lg border border-[#ff6b6b]/40 bg-[#ff6b6b]/10 p-3 text-xs text-[#ff6b6b]">
+                                {createForm.errors.general}
+                            </div>
+                        )}
                         <div className="rounded-lg border border-[#c9a227]/15 bg-[#07091a]/60 p-3">
                             <h4 className="mb-3 font-rajdhani text-xs font-bold uppercase tracking-wider text-[#c9a227]">
                                 Identificação & Contato
@@ -850,9 +866,28 @@ export default function CustomersIndex({
                                 </div>
 
                                 <div>
-                                    <Label className="text-xs text-[#7a84a0]">DDI / Código do País</Label>
+                                    <Label className="text-xs text-[#7a84a0]">Senha de Acesso *</Label>
+                                    <Input
+                                        type="password"
+                                        required
+                                        minLength={8}
+                                        placeholder="Mínimo 8 caracteres"
+                                        value={createForm.data.password}
+                                        onChange={(e) => createForm.setData('password', e.target.value)}
+                                        className="mt-1 border-[#c9a227]/20 bg-[#0d1228] text-sm text-white"
+                                    />
+                                    {createForm.errors.password && (
+                                        <p className="mt-1 text-[11px] text-[#ff6b6b]">
+                                            {createForm.errors.password}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <Label className="text-xs text-[#7a84a0]">DDI / Código do País *</Label>
                                     {stripeCountries.length > 0 ? (
                                         <select
+                                            required
                                             value={createForm.data.country_code}
                                             onChange={(e) => handleCreateDdiChange(e.target.value)}
                                             className="mt-1 flex h-9 w-full rounded-md border border-[#c9a227]/20 bg-[#0d1228] px-3 font-sans text-sm text-white focus:border-[#c9a227]/60 focus:outline-none"
@@ -865,6 +900,7 @@ export default function CustomersIndex({
                                         </select>
                                     ) : (
                                         <Input
+                                            required
                                             placeholder="+55"
                                             value={createForm.data.country_code}
                                             onChange={(e) => createForm.setData('country_code', e.target.value)}
@@ -875,7 +911,7 @@ export default function CustomersIndex({
 
                                 <div>
                                     <div className="flex items-center justify-between">
-                                        <Label className="text-xs text-[#7a84a0]">Telefone / Celular</Label>
+                                        <Label className="text-xs text-[#7a84a0]">Telefone / Celular *</Label>
                                         {selectedCreateDdiCountry && (
                                             <span className="font-mono text-[10px] text-[#22c55e]">
                                                 {selectedCreateDdiCountry.ddi}
@@ -883,6 +919,7 @@ export default function CustomersIndex({
                                         )}
                                     </div>
                                     <Input
+                                        required
                                         placeholder={getPhonePlaceholder(selectedCreateDdiCountry?.value || createForm.data.country)}
                                         value={createForm.data.phone}
                                         onChange={(e) =>
@@ -1085,6 +1122,11 @@ export default function CustomersIndex({
                     </DialogHeader>
 
                     <form onSubmit={handleEditSubmit} className="space-y-4 pt-2">
+                        {editForm.errors.general && (
+                            <div className="rounded-lg border border-[#ff6b6b]/40 bg-[#ff6b6b]/10 p-3 text-xs text-[#ff6b6b]">
+                                {editForm.errors.general}
+                            </div>
+                        )}
                         <div className="rounded-lg border border-[#c9a227]/15 bg-[#07091a]/60 p-3">
                             <h4 className="mb-3 font-rajdhani text-xs font-bold uppercase tracking-wider text-[#c9a227]">
                                 Identificação & Contato
@@ -1122,9 +1164,27 @@ export default function CustomersIndex({
                                 </div>
 
                                 <div>
-                                    <Label className="text-xs text-[#7a84a0]">DDI / Código do País</Label>
+                                    <Label className="text-xs text-[#7a84a0]">Nova Senha (Opcional)</Label>
+                                    <Input
+                                        type="password"
+                                        minLength={8}
+                                        placeholder="Deixe em branco para manter a atual"
+                                        value={editForm.data.password}
+                                        onChange={(e) => editForm.setData('password', e.target.value)}
+                                        className="mt-1 border-[#c9a227]/20 bg-[#0d1228] text-sm text-white"
+                                    />
+                                    {editForm.errors.password && (
+                                        <p className="mt-1 text-[11px] text-[#ff6b6b]">
+                                            {editForm.errors.password}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <Label className="text-xs text-[#7a84a0]">DDI / Código do País *</Label>
                                     {stripeCountries.length > 0 ? (
                                         <select
+                                            required
                                             value={editForm.data.country_code}
                                             onChange={(e) => handleEditDdiChange(e.target.value)}
                                             className="mt-1 flex h-9 w-full rounded-md border border-[#c9a227]/20 bg-[#0d1228] px-3 font-sans text-sm text-white focus:border-[#c9a227]/60 focus:outline-none"
@@ -1137,6 +1197,7 @@ export default function CustomersIndex({
                                         </select>
                                     ) : (
                                         <Input
+                                            required
                                             value={editForm.data.country_code}
                                             onChange={(e) => editForm.setData('country_code', e.target.value)}
                                             className="mt-1 border-[#c9a227]/20 bg-[#0d1228] text-sm text-white"
@@ -1146,7 +1207,7 @@ export default function CustomersIndex({
 
                                 <div>
                                     <div className="flex items-center justify-between">
-                                        <Label className="text-xs text-[#7a84a0]">Telefone / Celular</Label>
+                                        <Label className="text-xs text-[#7a84a0]">Telefone / Celular *</Label>
                                         {selectedEditDdiCountry && (
                                             <span className="font-mono text-[10px] text-[#22c55e]">
                                                 {selectedEditDdiCountry.ddi}
@@ -1154,6 +1215,7 @@ export default function CustomersIndex({
                                         )}
                                     </div>
                                     <Input
+                                        required
                                         placeholder={getPhonePlaceholder(selectedEditDdiCountry?.value || editForm.data.country)}
                                         value={editForm.data.phone}
                                         onChange={(e) =>
@@ -1400,11 +1462,17 @@ export default function CustomersIndex({
                                 </div>
                             )}
 
-                            <DialogFooter className="pt-2">
+                            <DialogFooter className="flex items-center justify-between gap-2 pt-2 sm:justify-between">
+                                <Link
+                                    href={`/customers/${selectedCustomer.uuid}`}
+                                    className="flex items-center gap-1.5 rounded-md border border-[#c9a227]/40 bg-[#c9a227]/15 px-3 py-1.5 font-rajdhani text-xs font-bold uppercase tracking-wider text-[#c9a227] transition hover:bg-[#c9a227]/25"
+                                >
+                                    <Receipt className="size-3.5" /> Gerenciar Assinaturas & Faturas
+                                </Link>
                                 <Button
                                     type="button"
                                     onClick={() => setIsViewOpen(false)}
-                                    className="border border-[#c9a227]/40 bg-[#c9a227]/15 font-rajdhani text-xs font-bold uppercase text-[#c9a227] hover:bg-[#c9a227]/25"
+                                    className="border border-white/10 bg-white/5 font-rajdhani text-xs font-bold uppercase text-[#7a84a0] hover:text-white"
                                 >
                                     Fechar
                                 </Button>

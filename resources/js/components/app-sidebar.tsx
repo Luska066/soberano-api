@@ -5,6 +5,7 @@ import {
     Download,
     LayoutDashboard,
     LogOut,
+    Package,
     Settings,
     User,
 } from 'lucide-react';
@@ -35,6 +36,11 @@ const mainNavItems: NavItem[] = [
         title: 'Clientes',
         href: '/customers',
         icon: User,
+    },
+    {
+        title: 'Produtos',
+        href: '/products',
+        icon: Package,
     },
 ];
 

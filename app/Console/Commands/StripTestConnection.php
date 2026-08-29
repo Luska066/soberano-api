@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Stripe\StripeClient;
 
-#[Signature('app:strip-test-connection')]
+#[Signature('app:strip')]
 #[Description('Command description')]
 class StripTestConnection extends Command
 {
@@ -31,12 +31,11 @@ class StripTestConnection extends Command
             $stripe = new StripeClient($secret);
             $account = $stripe->accounts->retrieve();
             $user = User::first();
-            Log::channel('stripe')->info('TEste', [
-                'message' => 'ok'
+            $products = $stripe->products->all([
+                'limit' => 10,
+                'active' => true,
             ]);
-
-            $products = $stripe->customers->all();
-            dump($products);
+            dd($products->toArray());
             // $user = User::first()->createOrGetStripeCustomer();
             // $user->newSubscription('main', 'price_1SLf4K2E3h3qD0mXkM6yU6fW')->create('pm_1SLf4l2E3h3qD0mXkL3h4Q8e');
 

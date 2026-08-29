@@ -519,6 +519,42 @@ enum StripCountrieType: string
     }
 
     /**
+     * Localiza o enum de país a partir de um DDI (ex: '+55' ou '55').
+     */
+    public static function fromDdi(?string $ddi): ?self
+    {
+        if (empty($ddi)) {
+            return null;
+        }
+
+        $formatted = str_starts_with(trim($ddi), '+') ? trim($ddi) : '+' . trim($ddi);
+
+        foreach (self::cases() as $case) {
+            if ($case->ddi() === $formatted) {
+                return $case;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Verifica se um DDI é suportado.
+     */
+    public static function isValidDdi(?string $ddi): bool
+    {
+        return self::fromDdi($ddi) !== null;
+    }
+
+    /**
+     * Verifica se um país (código ISO ou nome/rótulo) é suportado.
+     */
+    public static function isValidCountry(?string $country): bool
+    {
+        return self::fromValueOrLabel($country) !== null;
+    }
+
+    /**
      * Localiza o enum de país a partir de um código ISO (ex: 'BR') ou nome/rótulo (ex: 'Brasil').
      */
     public static function fromValueOrLabel(?string $value): ?self

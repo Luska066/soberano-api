@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('product', function (Blueprint $table) {
-            $table->uuid();
-            $table->string('id_stripe')->unique();
-            $table->json('data');
+        Schema::dropIfExists('product_benefits');
+
+        Schema::create('product_benefits', function (Blueprint $table) {
+            $table->id();
+            $table->uuid('product_id')->index();
+            $table->text('name');
+            $table->text('description')->nullable();
             $table->timestamps();
-            $table->softDeletes();
-            $table->index('id_stripe');
         });
-        
     }
 
     /**
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('product');
+        Schema::dropIfExists('product_benefits');
     }
 };

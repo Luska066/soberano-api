@@ -6,9 +6,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['id_stripe', 'data', 'prices'])]
+#[Fillable(['id_stripe', 'data', 'name', 'description', 'image', 'default_price'])]
 class Product extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
@@ -30,7 +31,16 @@ class Product extends Model
     {
         return [
             'data' => 'array',
-            'prices' => 'array',
         ];
+    }
+
+    public function benefits(): HasMany
+    {
+        return $this->hasMany(ProductBenefit::class, 'product_id', 'uuid');
+    }
+
+    public function prices(): HasMany
+    {
+        return $this->hasMany(Price::class, 'product_id', 'id_stripe')->withTrashed();
     }
 }
