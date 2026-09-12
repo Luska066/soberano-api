@@ -22,8 +22,8 @@ export default function AuthSimpleLayout({
             {/* Radial Navy Glow in center */}
             <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[600px] rounded-full bg-[#1a2a5e]/35 blur-[120px]" />
 
-            <div className="relative z-10 w-full max-w-md">
-                <div className="flex flex-col gap-6 rounded-xl border border-[#c9a227]/30 bg-[#0d1228]/90 p-8 shadow-[0_0_50px_rgba(201,162,39,0.08)] backdrop-blur-xl md:p-10">
+            <div className="relative z-10 w-full max-w-2xl">
+                <div className="flex flex-col gap-6 rounded-xl border border-[#c9a227]/30 bg-[#0d1228]/90 p-6 shadow-[0_0_50px_rgba(201,162,39,0.08)] backdrop-blur-xl sm:p-8 md:p-10">
                     <div className="flex flex-col items-center gap-3">
                         <Link
                             href={home()}

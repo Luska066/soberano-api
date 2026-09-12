@@ -8,10 +8,13 @@ use App\Models\CustomerWithoutObservable;
 use App\Models\StripeWebhookEvent;
 use App\Models\User;
 use Exception;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Laravel\Cashier\Subscription;
+use Laravel\Cashier\SubscriptionItem;
 
 class CustomerWebhookChannels
 extends InvoiceWebhookChannels
@@ -70,6 +73,10 @@ implements Channels
                 return $this->invoiceUpdated($data);
             case self::InvoiceSent:
                 return $this->invoiceSent($data);
+            case self::InvoicePaid:
+                return $this->invoicePaid($data);
+            case self::InvoicePaymentPaid:
+                return $this->invoicePaymentPaid($data);
             case self::InvoicePaymentSucceeded:
                 return $this->invoicePaymentSucceeded($data);
             case self::InvoicePaymentFailed:
@@ -206,9 +213,225 @@ implements Channels
         $this->customerCreated($data);
     }
     public function customerDeleted(mixed $data = []) {}
-    public function customerSubscriptionUpdated(mixed $data = []) {}
-    public function customerSubscriptionDeleted(mixed $data = []) {}
-    public function customerSubscriptionCreated(mixed $data = []) {}
+
+    public function customerSubscriptionUpdated(mixed $data = [])
+    {
+        $this->recordAndSyncSubscription($data);
+    }
+
+    public function customerSubscriptionDeleted(mixed $data = [])
+    {
+        $eventId = $data['id'] ?? null;
+        $type = $data['type'] ?? self::CustomerSubscriptionDeleted;
+        $stripeObject = $data['data']['object'] ?? [];
+        $subscriptionId = $stripeObject['id'] ?? null;
+        $stripeCustomerId = $stripeObject['customer'] ?? null;
+
+        Log::channel('customer-webhook')->info($type, ['data' => $stripeObject]);
+
+        DB::beginTransaction();
+        try {
+            if ($eventId) {
+                StripeWebhookEvent::firstOrCreate(
+                    [
+                        'id_stripe_event' => $eventId,
+                        'type' => $type,
+                    ],
+                    [
+                        'data' => $data,
+                    ]
+                );
+            }
+
+            if ($subscriptionId) {
+                $subscription = Subscription::where('stripe_id', $subscriptionId)->first();
+
+                // Se não encontrou por subscription ID, tenta pelo usuário do customer
+                if (!$subscription && $stripeCustomerId) {
+                    $user = User::where('stripe_id', $stripeCustomerId)->first();
+                    if (!$user) {
+                        $customer = Customer::where('id_stripe', $stripeCustomerId)->first();
+                        $user = $customer?->user;
+                    }
+                    if ($user) {
+                        $subscription = $user->subscriptions()->where('type', 'default')->first();
+                    }
+                }
+
+                $endsAt = isset($stripeObject['ended_at']) && $stripeObject['ended_at']
+                    ? Carbon::createFromTimestamp($stripeObject['ended_at'])
+                    : (isset($stripeObject['canceled_at']) && $stripeObject['canceled_at']
+                        ? Carbon::createFromTimestamp($stripeObject['canceled_at'])
+                        : now());
+
+                if ($subscription) {
+                    $subscription->stripe_status = 'canceled';
+                    $subscription->ends_at = $endsAt;
+                    $subscription->save();
+                } else if ($stripeCustomerId) {
+                    $user = User::where('stripe_id', $stripeCustomerId)->first();
+                    if ($user) {
+                        Subscription::create([
+                            'user_id' => $user->id,
+                            'type' => $stripeObject['metadata']['name'] ?? 'default',
+                            'stripe_id' => $subscriptionId,
+                            'stripe_status' => 'canceled',
+                            'stripe_price' => $stripeObject['items']['data'][0]['price']['id'] ?? null,
+                            'quantity' => $stripeObject['items']['data'][0]['quantity'] ?? 1,
+                            'ends_at' => $endsAt,
+                        ]);
+                    }
+                }
+            }
+
+            if ($eventId) {
+                StripeWebhookEvent::where([
+                    'id_stripe_event' => $eventId,
+                    'type' => $type,
+                ])->update([
+                    'processed_at' => now(),
+                    'data' => $data,
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::channel('customer-webhook')->error('Erro ao processar customer.subscription.deleted: ' . $e->getMessage(), [
+                'event_id' => $eventId,
+                'subscription_id' => $subscriptionId,
+            ]);
+
+            if ($eventId) {
+                StripeWebhookEvent::where([
+                    'id_stripe_event' => $eventId,
+                    'type' => $type,
+                ])->update([
+                    'last_error' => json_encode([
+                        'error_message' => $e->getMessage(),
+                        'error_line' => $e->getLine(),
+                        'error_file' => $e->getFile(),
+                    ]),
+                    'data' => $data,
+                ]);
+            }
+        }
+    }
+
+    public function customerSubscriptionCreated(mixed $data = [])
+    {
+        $this->recordAndSyncSubscription($data);
+    }
+
     public function customerSubscriptionTrialWillEnd(mixed $data = []) {}
     public function customerSubscriptionPaused(mixed $data = []) {}
+
+    /**
+     * Registra o evento de webhook e sincroniza a assinatura no banco.
+     */
+    public function recordAndSyncSubscription(mixed $data = []): void
+    {
+        $eventId = $data['id'] ?? null;
+        $type = $data['type'] ?? 'customer.subscription.sync';
+
+        if ($eventId) {
+            StripeWebhookEvent::firstOrCreate(
+                [
+                    'id_stripe_event' => $eventId,
+                    'type' => $type,
+                ],
+                [
+                    'data' => $data,
+                ]
+            );
+        }
+
+        try {
+            $this->syncSubscription($data);
+
+            if ($eventId) {
+                StripeWebhookEvent::where([
+                    'id_stripe_event' => $eventId,
+                    'type' => $type,
+                ])->update([
+                    'processed_at' => now(),
+                    'data' => $data,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::channel('customer-webhook')->error("Erro ao sincronizar subscription ({$type}): " . $e->getMessage());
+
+            if ($eventId) {
+                StripeWebhookEvent::where([
+                    'id_stripe_event' => $eventId,
+                    'type' => $type,
+                ])->update([
+                    'last_error' => json_encode([
+                        'error_message' => $e->getMessage(),
+                        'error_line' => $e->getLine(),
+                        'error_file' => $e->getFile(),
+                    ]),
+                    'data' => $data,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Sincroniza a assinatura do Stripe com a tabela local de subscriptions do Cashier.
+     */
+    public function syncSubscription(mixed $data = []): void
+    {
+        $stripeObject = $data['data']['object'] ?? [];
+        $stripeCustomerId = $stripeObject['customer'] ?? null;
+        $subscriptionId = $stripeObject['id'] ?? null;
+
+        if (!$stripeCustomerId || !$subscriptionId) {
+            return;
+        }
+
+        $user = User::where('stripe_id', $stripeCustomerId)->first();
+        if (!$user) {
+            $customer = Customer::where('id_stripe', $stripeCustomerId)->first();
+            $user = $customer?->user;
+        }
+
+        if (!$user) {
+            Log::channel('customer-webhook')->warning('User not found for stripe customer: ' . $stripeCustomerId);
+            return;
+        }
+
+        $firstItem = $stripeObject['items']['data'][0] ?? null;
+        $priceId = $firstItem['price']['id'] ?? null;
+        $quantity = $firstItem['quantity'] ?? 1;
+
+        $subscription = Subscription::updateOrCreate(
+            [
+                'stripe_id' => $subscriptionId,
+            ],
+            [
+                'user_id' => $user->id,
+                'type' => $stripeObject['metadata']['name'] ?? $stripeObject['metadata']['type'] ?? 'default',
+                'stripe_status' => $stripeObject['status'] ?? 'active',
+                'stripe_price' => $priceId,
+                'quantity' => $quantity,
+                'trial_ends_at' => isset($stripeObject['trial_end']) && $stripeObject['trial_end'] ? Carbon::createFromTimestamp($stripeObject['trial_end']) : null,
+                'ends_at' => isset($stripeObject['cancel_at']) && $stripeObject['cancel_at'] ? Carbon::createFromTimestamp($stripeObject['cancel_at']) : (isset($stripeObject['ended_at']) && $stripeObject['ended_at'] ? Carbon::createFromTimestamp($stripeObject['ended_at']) : null),
+            ]
+        );
+
+        if ($firstItem) {
+            SubscriptionItem::updateOrCreate(
+                [
+                    'subscription_id' => $subscription->id,
+                    'stripe_id' => $firstItem['id'],
+                ],
+                [
+                    'stripe_product' => is_string($firstItem['price']['product'] ?? null) ? $firstItem['price']['product'] : ($firstItem['price']['product']['id'] ?? ''),
+                    'stripe_price' => $priceId,
+                    'quantity' => $quantity,
+                ]
+            );
+        }
+    }
 }

@@ -29,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'license.active' => \App\Http\Middleware\EnsureActiveLicense::class,
+            'admin'          => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'customer'       => \App\Http\Middleware\EnsureUserIsCustomer::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -186,8 +186,14 @@ export default function CustomerShow({
     const [copiedStripeId, setCopiedStripeId] = useState(false);
     const [invoiceFilter, setInvoiceFilter] = useState<'all' | 'paid' | 'open' | 'other'>('all');
 
+    // Loading states
+    const [isActionLoading, setIsActionLoading] = useState(false);
+    const [loadingText, setLoadingText] = useState('Processando solicitação...');
+
     // Modais
     const [isCreateSubOpen, setIsCreateSubOpen] = useState(false);
+    const [isSwapSubOpen, setIsSwapSubOpen] = useState(false);
+    const [subToSwap, setSubToSwap] = useState<SubscriptionItem | null>(null);
     const [isCancelSubOpen, setIsCancelSubOpen] = useState(false);
     const [subToCancel, setSubToCancel] = useState<SubscriptionItem | null>(null);
     const [cancelImmediately, setCancelImmediately] = useState(false);
@@ -201,6 +207,11 @@ export default function CustomerShow({
         trial_days: '',
     });
 
+    // Form Trocar Plano (Swap)
+    const swapSubForm = useForm({
+        price_id: '',
+    });
+
     const handleCopyStripeId = () => {
         const id = customer.stripe_id || customer.id_stripe;
         if (id) {
@@ -211,19 +222,47 @@ export default function CustomerShow({
     };
 
     const handleSyncStripe = () => {
+        setLoadingText('Sincronizando dados com o Stripe...');
+        setIsActionLoading(true);
         router.post(`/customers/${customer.uuid}/sync`, {}, {
             preserveScroll: true,
+            onFinish: () => setIsActionLoading(false),
         });
     };
 
     const handleCreateSubscriptionSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setLoadingText('Criando assinatura no Stripe...');
+        setIsActionLoading(true);
         createSubForm.post(`/customers/${customer.uuid}/subscriptions`, {
             preserveScroll: true,
             onSuccess: () => {
                 setIsCreateSubOpen(false);
                 createSubForm.reset();
             },
+            onFinish: () => setIsActionLoading(false),
+        });
+    };
+
+    const handleOpenSwapModal = (sub: SubscriptionItem) => {
+        setSubToSwap(sub);
+        swapSubForm.setData('price_id', '');
+        setIsSwapSubOpen(true);
+    };
+
+    const handleSwapSubscriptionSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!subToSwap) return;
+        setLoadingText('Atualizando plano da assinatura no Stripe...');
+        setIsActionLoading(true);
+        swapSubForm.post(`/customers/${customer.uuid}/subscriptions/${subToSwap.id}/swap`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsSwapSubOpen(false);
+                setSubToSwap(null);
+                swapSubForm.reset();
+            },
+            onFinish: () => setIsActionLoading(false),
         });
     };
 
@@ -235,6 +274,8 @@ export default function CustomerShow({
 
     const handleConfirmCancel = () => {
         if (!subToCancel) return;
+        setLoadingText('Processando cancelamento da assinatura no Stripe...');
+        setIsActionLoading(true);
         router.post(
             `/customers/${customer.uuid}/subscriptions/${subToCancel.id}/cancel`,
             { cancel_now: cancelImmediately },
@@ -244,15 +285,21 @@ export default function CustomerShow({
                     setIsCancelSubOpen(false);
                     setSubToCancel(null);
                 },
+                onFinish: () => setIsActionLoading(false),
             }
         );
     };
 
     const handleResumeSubscription = (sub: SubscriptionItem) => {
+        setLoadingText('Retomando assinatura no Stripe...');
+        setIsActionLoading(true);
         router.post(
             `/customers/${customer.uuid}/subscriptions/${sub.id}/resume`,
             {},
-            { preserveScroll: true }
+            {
+                preserveScroll: true,
+                onFinish: () => setIsActionLoading(false),
+            }
         );
     };
 
@@ -281,6 +328,17 @@ export default function CustomerShow({
                 style: 'currency',
                 currency: curr,
             }).format(val / 100);
+        } catch {
+            return `${curr} ${val.toFixed(2)}`;
+        }
+    };
+
+    const formatCurrencyCard = (val: number, curr = 'USD') => {
+        try {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: curr,
+            }).format(val);
         } catch {
             return `${curr} ${val.toFixed(2)}`;
         }
@@ -386,9 +444,40 @@ export default function CustomerShow({
         (s) => s.status === 'active' || s.status === 'trialing'
     ).length;
 
+    const hasActiveSubscription = activeSubscriptionsCount > 0;
+
     return (
         <>
             <Head title={`Gerenciar Cliente - ${customer.name || 'Cliente'}`} />
+
+            {/* TELA DE LOADING / ACTION OVERLAY */}
+            {isActionLoading && (
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#060814]/85 backdrop-blur-md transition-all duration-300">
+                    <div className="relative flex flex-col items-center justify-center rounded-3xl border border-[#c9a227]/40 bg-[#0d1228]/95 p-8 shadow-2xl shadow-[#c9a227]/20">
+                        {/* Animated glowing rings */}
+                        <div className="relative flex size-24 items-center justify-center">
+                            <div className="absolute inset-0 animate-ping rounded-full border-2 border-[#c9a227]/40 opacity-75" />
+                            <div className="absolute inset-2 animate-spin rounded-full border-2 border-transparent border-t-[#c9a227] border-r-[#dfba45]" />
+                            <div className="flex size-14 items-center justify-center rounded-full border border-[#c9a227]/50 bg-gradient-to-br from-[#c9a227]/30 to-[#07091a] text-[#c9a227] shadow-lg shadow-[#c9a227]/30">
+                                <RefreshCw className="size-7 animate-spin text-[#c9a227]" />
+                            </div>
+                        </div>
+
+                        <h3 className="mt-5 font-rajdhani text-xl font-bold uppercase tracking-wider text-white">
+                            Aguarde um instante
+                        </h3>
+                        <p className="mt-1 flex items-center gap-1 font-sans text-xs font-semibold text-[#c9a227]">
+                            <span>{loadingText}</span>
+                        </p>
+
+                        <div className="mt-4 flex items-center gap-1.5">
+                            <span className="size-2 animate-bounce rounded-full bg-[#c9a227] [animation-delay:-0.3s]" />
+                            <span className="size-2 animate-bounce rounded-full bg-[#c9a227] [animation-delay:-0.15s]" />
+                            <span className="size-2 animate-bounce rounded-full bg-[#c9a227]" />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-gradient-to-br from-[#060814] via-[#090d20] to-[#04060e] p-4 text-[#e4e6f0] md:p-8">
                 {/* Background glow effects */}
@@ -486,14 +575,16 @@ export default function CustomerShow({
                                     Sincronizar Stripe
                                 </Button>
 
-                                <Button
-                                    onClick={() => setIsCreateSubOpen(true)}
-                                    size="sm"
-                                    className="bg-gradient-to-r from-[#c9a227] to-[#dfba45] text-xs font-bold text-[#07091a] shadow-lg shadow-[#c9a227]/20 hover:brightness-110"
-                                >
-                                    <Plus className="mr-1.5 size-4" />
-                                    Nova Assinatura
-                                </Button>
+                                {!hasActiveSubscription && (
+                                    <Button
+                                        onClick={() => setIsCreateSubOpen(true)}
+                                        size="sm"
+                                        className="bg-gradient-to-r from-[#c9a227] to-[#dfba45] text-xs font-bold text-[#07091a] shadow-lg shadow-[#c9a227]/20 hover:brightness-110"
+                                    >
+                                        <Plus className="mr-1.5 size-4" />
+                                        Nova Assinatura
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -630,7 +721,7 @@ export default function CustomerShow({
                             </div>
                             <div className="mt-2">
                                 <div className="font-rajdhani text-2xl font-bold text-white">
-                                    {stripeCustomer ? formatCurrency(stripeCustomer.balance, stripeCustomer.currency) : 'R$ 0,00'}
+                                    {stripeCustomer ? formatCurrencyCard(stripeCustomer.balance, stripeCustomer.currency) : 'R$ 0,00'}
                                 </div>
                                 <div className="mt-1 flex items-center gap-1.5 text-xs">
                                     {stripeCustomer?.delinquent ? (
@@ -700,13 +791,15 @@ export default function CustomerShow({
                                             Gerencie os planos ativos, períodos de faturamento e status de cancelamento.
                                         </p>
                                     </div>
-                                    <Button
-                                        onClick={() => setIsCreateSubOpen(true)}
-                                        size="sm"
-                                        className="bg-[#c9a227] font-semibold text-[#07091a] hover:bg-[#dfba45]"
-                                    >
-                                        <Plus className="mr-1.5 size-4" /> Nova Assinatura
-                                    </Button>
+                                    {!hasActiveSubscription && (
+                                        <Button
+                                            onClick={() => setIsCreateSubOpen(true)}
+                                            size="sm"
+                                            className="bg-[#c9a227] font-semibold text-[#07091a] hover:bg-[#dfba45]"
+                                        >
+                                            <Plus className="mr-1.5 size-4" /> Nova Assinatura
+                                        </Button>
+                                    )}
                                 </div>
 
                                 {subscriptions.length === 0 ? (
@@ -752,7 +845,7 @@ export default function CustomerShow({
                                                                 <span>ID: {sub.id}</span>
                                                                 <span>•</span>
                                                                 <span className="font-sans font-bold text-[#c9a227]">
-                                                                    {formatCurrency(sub.unit_amount, sub.currency)} / {sub.interval === 'month' ? 'mês' : sub.interval === 'year' ? 'ano' : sub.interval}
+                                                                    {formatCurrencyCard(sub.unit_amount, sub.currency)} / {sub.interval === 'month' ? 'mês' : sub.interval === 'year' ? 'ano' : sub.interval}
                                                                 </span>
                                                                 <span>•</span>
                                                                 <span>Qtd: {sub.quantity}</span>
@@ -779,6 +872,18 @@ export default function CustomerShow({
                                                         </div>
 
                                                         <div className="flex items-center gap-2">
+                                                            {(sub.status === 'active' || sub.status === 'trialing') && (
+                                                                <Button
+                                                                    onClick={() => handleOpenSwapModal(sub)}
+                                                                    size="sm"
+                                                                    className="border border-[#c9a227]/40 bg-[#c9a227]/15 text-xs font-semibold text-[#c9a227] hover:bg-[#c9a227]/25"
+                                                                    title="Trocar para outro plano de assinatura"
+                                                                >
+                                                                    <RefreshCw className="mr-1.5 size-3.5" />
+                                                                    Trocar Plano
+                                                                </Button>
+                                                            )}
+
                                                             {sub.cancel_at_period_end ? (
                                                                 <Button
                                                                     onClick={() => handleResumeSubscription(sub)}
@@ -1087,25 +1192,12 @@ export default function CustomerShow({
                                         <optgroup key={prod.uuid} label={prod.name}>
                                             {(prod.prices || []).map((p) => (
                                                 <option key={p.uuid} value={p.id_stripe}>
-                                                    {prod.name} — {formatCurrency(p.unit_amount, p.currency)} / {p.interval}
+                                                    {prod.name} — {formatCurrencyCard(p.unit_amount, p.currency)} / {p.interval}
                                                 </option>
                                             ))}
                                         </optgroup>
                                     ))}
                                 </select>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <Label htmlFor="sub_type" className="text-xs font-semibold text-white">
-                                    Identificador do Tipo (Opcional)
-                                </Label>
-                                <Input
-                                    id="sub_type"
-                                    placeholder="Ex: default, premium"
-                                    value={createSubForm.data.type}
-                                    onChange={(e) => createSubForm.setData('type', e.target.value)}
-                                    className="border-white/10 bg-[#07091a] text-xs text-white"
-                                />
                             </div>
 
                             <div className="space-y-1.5">
@@ -1143,6 +1235,90 @@ export default function CustomerShow({
                                 </Button>
                             </DialogFooter>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* MODAL: Trocar Plano de Assinatura (Swap) */}
+                <Dialog open={isSwapSubOpen} onOpenChange={setIsSwapSubOpen}>
+                    <DialogContent className="max-w-md border border-[#c9a227]/30 bg-[#0d1228] text-[#e4e6f0] shadow-2xl backdrop-blur-xl">
+                        <DialogHeader className="border-b border-[#c9a227]/20 pb-3 text-left">
+                            <div className="flex items-center gap-2">
+                                <div className="flex size-8 items-center justify-center rounded-lg border border-[#c9a227]/40 bg-[#c9a227]/10 text-[#c9a227]">
+                                    <RefreshCw className="size-4" />
+                                </div>
+                                <div>
+                                    <DialogTitle className="font-rajdhani text-xl font-bold uppercase tracking-wider text-white">
+                                        Trocar <span className="text-[#c9a227]">Plano de Assinatura</span>
+                                    </DialogTitle>
+                                    <DialogDescription className="text-xs text-[#7a84a0]">
+                                        Selecione o novo plano para atualizar a assinatura do cliente.
+                                    </DialogDescription>
+                                </div>
+                            </div>
+                        </DialogHeader>
+
+                        {subToSwap && (
+                            <form onSubmit={handleSwapSubscriptionSubmit} className="space-y-4 pt-3">
+                                <div className="rounded-lg border border-white/5 bg-[#07091a]/60 p-3 text-xs">
+                                    <span className="text-[11px] uppercase tracking-wider text-[#7a84a0]">
+                                        Plano Atual
+                                    </span>
+                                    <p className="mt-0.5 font-bold text-white">{subToSwap.plan_name}</p>
+                                    <p className="font-mono text-[#c9a227]">
+                                        {formatCurrencyCard(subToSwap.unit_amount, subToSwap.currency)} / {subToSwap.interval}
+                                    </p>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="swap_price_id" className="text-xs font-semibold text-white">
+                                        Novo Plano / Preço <span className="text-[#ff6b6b]">*</span>
+                                    </Label>
+                                    <select
+                                        id="swap_price_id"
+                                        value={swapSubForm.data.price_id}
+                                        onChange={(e) => swapSubForm.setData('price_id', e.target.value)}
+                                        required
+                                        className="w-full rounded-md border border-white/10 bg-[#07091a] px-3 py-2 text-xs text-white focus:border-[#c9a227] focus:outline-none"
+                                    >
+                                        <option value="">Selecione o novo plano...</option>
+                                        {availableProducts.map((prod) => (
+                                            <optgroup key={prod.uuid} label={prod.name}>
+                                                {(prod.prices || [])
+                                                    .filter((p) => p.id_stripe !== subToSwap.price_id)
+                                                    .map((p) => (
+                                                        <option key={p.uuid} value={p.id_stripe}>
+                                                            {prod.name} — {formatCurrencyCard(p.unit_amount / 100, p.currency)} / {p.interval}
+                                                        </option>
+                                                    ))}
+                                            </optgroup>
+                                        ))}
+                                    </select>
+                                    <p className="text-[11px] text-[#7a84a0]">
+                                        O valor proporcional (proration) será calculado e cobrado/creditado automaticamente pelo Stripe.
+                                    </p>
+                                </div>
+
+                                <DialogFooter className="border-t border-[#c9a227]/20 pt-4">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setIsSwapSubOpen(false)}
+                                        className="text-xs text-[#7a84a0] hover:text-white"
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        size="sm"
+                                        disabled={swapSubForm.processing || !swapSubForm.data.price_id}
+                                        className="bg-[#c9a227] font-bold text-[#07091a] hover:bg-[#dfba45]"
+                                    >
+                                        {swapSubForm.processing ? 'Atualizando...' : 'Confirmar Troca de Plano'}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        )}
                     </DialogContent>
                 </Dialog>
 
@@ -1298,7 +1474,7 @@ export default function CustomerShow({
                                                         </div>
                                                         <div className="text-right">
                                                             <p className="font-mono font-semibold text-white">
-                                                                {formatCurrency(line.amount, line.currency)}
+                                                                {formatCurrencyCard(line.amount, line.currency)}
                                                             </p>
                                                             <p className="text-[11px] text-[#7a84a0]">
                                                                 Qtd: {line.quantity}
