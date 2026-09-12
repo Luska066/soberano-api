@@ -143,11 +143,55 @@ const TESTIMONIALS_DATA = [
     },
 ];
 
-export default function Welcome() {
+interface AiModelItem {
+    id: number;
+    model_id: number;
+    filename: string;
+    title: string;
+    game_name: string;
+    resolution: string;
+    fps: number;
+    latency_ms: number;
+    soberano_score: number;
+    tier: string;
+    has_headshot: boolean;
+    downloads: number;
+    rating: number;
+    min_plan: string;
+}
+
+interface WelcomeProps {
+    aiModels?: AiModelItem[];
+}
+
+export default function Welcome({ aiModels }: WelcomeProps) {
     const { auth } = usePage().props;
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [billingCycle, setBillingCycle] = useState<'mensal' | 'anual'>('mensal');
+
+    const displayModels = (aiModels && aiModels.length > 0)
+        ? aiModels.map(m => {
+            const gameLower = m.game_name.toLowerCase();
+            let color = '#c9a227';
+            if (gameLower.includes('valorant')) color = '#cc2200';
+            else if (gameLower.includes('fortnite')) color = '#22c55e';
+            else if (gameLower.includes('apex')) color = '#4da6d6';
+            else if (gameLower.includes('warzone') || gameLower.includes('cod')) color = '#8b5cf6';
+            else if (gameLower.includes('roblox')) color = '#f97316';
+
+            return {
+                id: m.model_id.toString(),
+                name: m.title,
+                game: m.game_name,
+                ver: `${m.resolution} · ${m.fps} FPS`,
+                precision: Math.min(Math.round(m.soberano_score > 0 ? m.soberano_score : 95), 100),
+                latency: `${m.latency_ms}ms`,
+                type: m.has_headshot ? '🎯 Headshot' : m.tier,
+                color,
+            };
+        })
+        : MODELS_DATA;
 
     useEffect(() => {
         const handleScroll = () => {
@@ -513,7 +557,7 @@ export default function Welcome() {
                     </div>
 
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {MODELS_DATA.map((model) => (
+                        {displayModels.map((model) => (
                             <div
                                 key={model.id}
                                 className="rounded-xl border border-[#c9a227]/20 bg-[#0d1228]/80 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#c9a227]/50 hover:shadow-[0_0_25px_rgba(201,162,39,0.15)]"

@@ -134,10 +134,25 @@ const RECENT_ACTIVITIES = [
     },
 ];
 
-export default function Dashboard() {
-    const { auth } = usePage().props;
-    const userName = auth.user?.name || 'Comandante';
-    const userEmail = auth.user?.email || 'cliente@soberano.ai';
+interface LicenseData {
+    key: string;
+    plan: string;
+    plan_name: string;
+    status: string;
+    hwid: string;
+    days_remaining: number;
+    expires_at: string | null;
+    activated_at: string | null;
+}
+
+interface DashboardProps {
+    license?: LicenseData | null;
+}
+
+export default function Dashboard({ license }: DashboardProps) {
+    const { auth } = usePage().props as any;
+    const userName = auth?.user?.name || 'Comandante';
+    const userEmail = auth?.user?.email || 'cliente@soberano.ai';
 
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [models, setModels] = useState<InstalledModel[]>(INITIAL_MODELS);
@@ -145,7 +160,7 @@ export default function Dashboard() {
     const [savedProfile, setSavedProfile] = useState(false);
     const [displayName, setDisplayName] = useState(userName);
 
-    const licenseKey = 'SBR-2026-A4F7-K9QX-JD38-PLMV';
+    const licenseKey = license?.key || 'NENHUMA-LICENCA-ATIVA';
 
     useEffect(() => {
         const handleHashChange = () => {
@@ -592,11 +607,15 @@ export default function Dashboard() {
                                             Plano Ativo
                                         </span>
                                         <h2 className="font-rajdhani text-4xl font-bold tracking-wider text-white">
-                                            SOVEREIGN <span className="text-xl text-[#c9a227]">TIER</span>
+                                            {license?.plan_name ? license.plan_name.toUpperCase() : 'SEM PLANO ATIVO'}
                                         </h2>
                                         <div className="mt-1 flex items-center gap-2 font-mono text-xs text-green-400">
-                                            <span className="size-2 rounded-full bg-green-400 shadow-[0_0_8px_#22c55e]" />
-                                            <span>Ativa — Renovação em 12/09/2026</span>
+                                            <span className={`size-2 rounded-full ${license?.status === 'active' ? 'bg-green-400 shadow-[0_0_8px_#22c55e]' : 'bg-orange-400'}`} />
+                                            <span>
+                                                {license
+                                                    ? `${license.status === 'active' ? 'Ativa' : 'Inativa'} — ${license.expires_at ? `Expira em ${license.expires_at} (${license.days_remaining} dias restantes)` : 'Aguardando Primeiro Login'}`
+                                                    : 'Adquira uma assinatura para gerar sua chave'}
+                                            </span>
                                         </div>
                                     </div>
 
@@ -677,14 +696,14 @@ export default function Dashboard() {
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-rajdhani font-bold text-white">
-                                                        PC Principal
+                                                        {license?.hwid && license.hwid !== 'GLOBAL' ? 'PC Vinculado' : 'Aguardando Primeiro Login'}
                                                     </span>
                                                     <span className="rounded bg-[#c9a227]/15 px-1.5 py-0.5 font-mono text-[10px] text-[#c9a227]">
-                                                        HW-001
+                                                        {license?.hwid || 'GLOBAL (Livre)'}
                                                     </span>
                                                 </div>
                                                 <span className="font-mono text-xs text-[#7a84a0]">
-                                                    Windows 11 Pro 64-bit
+                                                    {license?.app_version ? `Versão do App: ${license.app_version}` : 'Compatível com Windows 10/11 & Linux'}
                                                 </span>
                                             </div>
                                         </div>

@@ -15,11 +15,21 @@ return new class extends Migration
             if (Schema::hasColumn('product', 'prices')) {
                 $table->dropColumn('prices');
             }
-            $table->string('name');
-            $table->string('description')->nullable();
-            $table->string('image')->nullable();
-            $table->string('default_price')->nullable();
-            $table->softDeletes();
+            if (!Schema::hasColumn('product', 'name')) {
+                $table->string('name')->nullable();
+            }
+            if (!Schema::hasColumn('product', 'description')) {
+                $table->string('description')->nullable();
+            }
+            if (!Schema::hasColumn('product', 'image')) {
+                $table->string('image')->nullable();
+            }
+            if (!Schema::hasColumn('product', 'default_price')) {
+                $table->string('default_price')->nullable();
+            }
+            if (!Schema::hasColumn('product', 'deleted_at')) {
+                $table->softDeletes();
+            }
         });
         Schema::create('product_benefits', function (Blueprint $table) {
             $table->id();

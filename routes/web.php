@@ -8,10 +8,46 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductController;
 use App\Stripe\Webhoook\CustomerWebhookChannels;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::get('/', function () {
+    $models = \App\Models\AiModel::where('is_active', true)
+        ->orderByDesc('soberano_score')
+        ->take(12)
+        ->get();
+
+    return inertia('welcome', [
+        'aiModels' => $models,
+    ]);
+})->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', function () {
+        $user = auth()->user();
+        $license = null;
+        if ($user) {
+            $license = \App\Models\License::where('user_id', $user->id)
+                ->orWhere('user_email', $user->email)
+                ->latest()
+                ->first();
+        }
+
+        $models = \App\Models\AiModel::where('is_active', true)
+            ->orderByDesc('soberano_score')
+            ->get();
+
+        return inertia('dashboard', [
+            'license' => $license ? [
+                'key' => $license->key,
+                'plan' => $license->plan,
+                'plan_name' => $license->plan_name,
+                'status' => $license->status,
+                'hwid' => $license->hwid,
+                'days_remaining' => $license->days_remaining,
+                'expires_at' => $license->expires_at?->format('d/m/Y'),
+                'activated_at' => $license->activated_at?->format('d/m/Y H:i'),
+            ] : null,
+            'aiModels' => $models,
+        ]);
+    })->name('dashboard');
     Route::resource('customers', CustomerController::class);
     Route::post('customers/{customer}/sync', [CustomerController::class, 'syncStripe'])->name('customers.sync');
     Route::post('customers/{customer}/subscriptions', [CustomerController::class, 'createSubscription'])->name('customers.subscriptions.create');
