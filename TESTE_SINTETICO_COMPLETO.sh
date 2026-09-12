@@ -17,6 +17,7 @@ php -r '
 require "vendor/autoload.php";
 $app = require_once "bootstrap/app.php";
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+$kernel->bootstrap();
 
 function post($kernel, $uri, $data, $headers = []) {
     $req = Illuminate\Http\Request::create($uri, "POST", $data);
@@ -54,6 +55,11 @@ $reset = "\033[0m";
 
 $passCount = 0;
 $totalTests = 10;
+
+// Limpa estado de testes anteriores para garantir isolamento e idempotência
+App\Models\License::where("user_email", "cliente_vip@soberanogames.com")->delete();
+Illuminate\Support\Facades\DB::table("revoked_keys")->where("key", "like", "SOB-30D-%")->delete();
+Illuminate\Support\Facades\Cache::flush();
 
 echo "{$cyan}[CENÁRIO 1] Cliente realiza compra no site via Stripe (Webhook Event){$reset}\n";
 $webhookPayload = [
@@ -136,7 +142,8 @@ if ($res4["status"] === 403) {
     echo "  {$green}✔ APROVADO:{$reset} Invasor bloqueado com sucesso (HTTP 403 Forbidden)!\n";
     echo "  -> Mensagem de Bloqueio: {$red}" . $res4["body"]["message"] . "{$reset}\n\n";
 } else {
-    echo "  {$red}✘ FALHA:{$reset} A API permitiu login com HWID divergente!\n\n";
+    $st4 = $res4["status"] ?? 0;
+    echo "  {$red}✘ FALHA:{$reset} A API retornou HTTP {$st4}: " . json_encode($res4["body"] ?? []) . "\n\n";
 }
 
 echo "{$cyan}[CENÁRIO 5] Consulta ao Catálogo Oficial de IAs (/api/v1/models){$reset}\n";
@@ -221,7 +228,8 @@ if ($res10["status"] === 403 && (str_contains($msg10, "CANCELADA") || str_contai
     echo "  {$green}✔ APROVADO:{$reset} API retorna sinal de morte (HTTP 403 Revogada)!\n";
     echo "  -> Gatilho acionado: IA-SOBERANO-GAMES deleta license.dat e desliga o aimbot.\n\n";
 } else {
-    echo "  {$red}✘ FALHA:{$reset} Chave revogada não retornou 403! Status: {$res10['status']} | Msg: {$msg10}\n\n";
+    $st10 = $res10["status"] ?? 0;
+    echo "  {$red}✘ FALHA:{$reset} Chave revogada não retornou 403! Status: {$st10} | Msg: {$msg10}\n\n";
 }
 
 echo "═══════════════════════════════════════════════════════════════════════\n";

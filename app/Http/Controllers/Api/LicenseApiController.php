@@ -113,10 +113,10 @@ class LicenseApiController extends Controller
     public function generate(Request $request): JsonResponse
     {
         // Validação de Chave Mestre de Admin via Bearer ou Header
-        $adminSecret = env('SOBERANO_ADMIN_SECRET', 'soberano-master-adm-2026');
+        $adminSecret = config('services.soberano.admin_secret') ?: env('SOBERANO_ADMIN_SECRET');
         $token = $request->bearerToken() ?: $request->header('X-Admin-Secret');
 
-        if (!$token || !hash_equals($adminSecret, $token)) {
+        if (empty($adminSecret) || !$token || !hash_equals((string) $adminSecret, (string) $token)) {
             return response()->json(['error' => 'Acesso não autorizado ao Keygen Master.'], 403);
         }
 
@@ -154,10 +154,10 @@ class LicenseApiController extends Controller
      */
     public function revoke(Request $request): JsonResponse
     {
-        $adminSecret = env('SOBERANO_ADMIN_SECRET', 'soberano-master-adm-2026');
+        $adminSecret = config('services.soberano.admin_secret') ?: env('SOBERANO_ADMIN_SECRET');
         $token = $request->bearerToken() ?: $request->header('X-Admin-Secret');
 
-        if (!$token || !hash_equals($adminSecret, $token)) {
+        if (empty($adminSecret) || !$token || !hash_equals((string) $adminSecret, (string) $token)) {
             return response()->json(['error' => 'Não autorizado.'], 403);
         }
 
@@ -190,10 +190,10 @@ class LicenseApiController extends Controller
      */
     public function resetHwid(Request $request): JsonResponse
     {
-        $adminSecret = env('SOBERANO_ADMIN_SECRET', 'soberano-master-adm-2026');
+        $adminSecret = config('services.soberano.admin_secret') ?: env('SOBERANO_ADMIN_SECRET');
         $token = $request->bearerToken() ?: $request->header('X-Admin-Secret');
 
-        if (!$token || !hash_equals($adminSecret, $token)) {
+        if (empty($adminSecret) || !$token || !hash_equals((string) $adminSecret, (string) $token)) {
             return response()->json(['error' => 'Não autorizado.'], 403);
         }
 

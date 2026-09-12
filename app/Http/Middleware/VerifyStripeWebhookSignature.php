@@ -23,7 +23,10 @@ class VerifyStripeWebhookSignature
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $secret = config('cashier.webhook.secret') ?? env('STRIPE_WEBHOOK_SECRET');
+        $secret = config('cashier.webhook.secret') ?: env('STRIPE_WEBHOOK_SECRET');
+        if (!empty($secret) && str_starts_with(trim($secret), '#')) {
+            $secret = null;
+        }
 
         // Se não houver secret configurado, bloqueia em produção
         if (empty($secret)) {

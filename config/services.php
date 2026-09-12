@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'soberano' => [
+        'admin_secret' => env('SOBERANO_ADMIN_SECRET'),
+    ],
+
 ];

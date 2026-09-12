@@ -85,8 +85,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::post('/stripe/webhook', function (Request $request) {
-    // Payload já verificado pelo middleware VerifyStripeWebhookSignature
-    $payload = json_decode($request->getContent(), true);
+    // Payload já verificado pelo middleware VerifyStripeWebhookSignature (suporta raw JSON ou array)
+    $payload = json_decode($request->getContent(), true) ?: $request->all();
 
     if (!$payload || !isset($payload['type'])) {
         Log::channel('stripe')->warning('Webhook com payload inválido.', ['ip' => $request->ip()]);
