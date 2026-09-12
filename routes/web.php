@@ -84,14 +84,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
-Route::any('/stripe/webhook', function (Request $request) {
-    Log::channel('stripe')->info($request->type, $request->all());
+Route::post('/stripe/webhook', function (Request $request) {
+    // Payload já verificado pelo middleware VerifyStripeWebhookSignature
+    $payload = json_decode($request->getContent(), true);
+
+    if (!$payload || !isset($payload['type'])) {
+        Log::channel('stripe')->warning('Webhook com payload inválido.', ['ip' => $request->ip()]);
+        return response()->json(['error' => 'Payload inválido.'], 400);
+    }
+
+    Log::channel('stripe')->info('Webhook recebido: ' . $payload['type']);
+
     $webhooks = new CustomerWebhookChannels();
-    $webhooks->resolve($request->type, $request->all());
-    return response()->json([
-        'message' => 'Webhook Stripe funcionando',
-        'request' => $request->all(),
-    ]);
-});
+    $webhooks->resolve($payload['type'], $payload);
+
+    return response()->json(['received' => true]);
+})->middleware('stripe.webhook');
 
 require __DIR__ . '/settings.php';

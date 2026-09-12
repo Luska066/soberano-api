@@ -28,9 +28,10 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
         $middleware->alias([
-            'license.active' => \App\Http\Middleware\EnsureActiveLicense::class,
-            'admin'          => \App\Http\Middleware\EnsureUserIsAdmin::class,
-            'customer'       => \App\Http\Middleware\EnsureUserIsCustomer::class,
+            'license.active'  => \App\Http\Middleware\EnsureActiveLicense::class,
+            'admin'           => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'customer'        => \App\Http\Middleware\EnsureUserIsCustomer::class,
+            'stripe.webhook'  => \App\Http\Middleware\VerifyStripeWebhookSignature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
