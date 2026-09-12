@@ -22,6 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
             'v1/*',
         ]);
+        // Cabeçalhos de segurança globais (OWASP) em todas as requisições
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,

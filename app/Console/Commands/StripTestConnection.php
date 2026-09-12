@@ -35,9 +35,8 @@ class StripTestConnection extends Command
                 'limit' => 10,
                 'active' => true,
             ]);
-            dd($products->toArray());
-            // $user = User::first()->createOrGetStripeCustomer();
-            // $user->newSubscription('main', 'price_1SLf4K2E3h3qD0mXkM6yU6fW')->create('pm_1SLf4l2E3h3qD0mXkL3h4Q8e');
+
+            $this->info('Produtos encontrados: ' . count($products->data));
 
 
             $this->newLine();
