@@ -116,7 +116,7 @@ class LicenseApiController extends Controller
         $adminSecret = env('SOBERANO_ADMIN_SECRET', 'soberano-master-adm-2026');
         $token = $request->bearerToken() ?: $request->header('X-Admin-Secret');
 
-        if ($token !== $adminSecret) {
+        if (!$token || !hash_equals($adminSecret, $token)) {
             return response()->json(['error' => 'Acesso não autorizado ao Keygen Master.'], 403);
         }
 
@@ -157,7 +157,7 @@ class LicenseApiController extends Controller
         $adminSecret = env('SOBERANO_ADMIN_SECRET', 'soberano-master-adm-2026');
         $token = $request->bearerToken() ?: $request->header('X-Admin-Secret');
 
-        if ($token !== $adminSecret) {
+        if (!$token || !hash_equals($adminSecret, $token)) {
             return response()->json(['error' => 'Não autorizado.'], 403);
         }
 
@@ -193,7 +193,7 @@ class LicenseApiController extends Controller
         $adminSecret = env('SOBERANO_ADMIN_SECRET', 'soberano-master-adm-2026');
         $token = $request->bearerToken() ?: $request->header('X-Admin-Secret');
 
-        if ($token !== $adminSecret) {
+        if (!$token || !hash_equals($adminSecret, $token)) {
             return response()->json(['error' => 'Não autorizado.'], 403);
         }
 
