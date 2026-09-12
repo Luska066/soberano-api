@@ -18,43 +18,56 @@ class AiModelApiController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // ── Validação e sanitização de entradas
+        $request->validate([
+            'game'         => 'nullable|string|max:50',
+            'tier'         => 'nullable|string|max:30',
+            'sort_by'      => 'nullable|string|max:30',
+            'order'        => 'nullable|in:asc,desc',
+            'per_page'     => 'nullable|integer|min:1|max:24',
+            'has_headshot' => 'nullable',
+        ]);
+
         $query = AiModel::where('is_active', true);
 
-        // Filtro por Jogo
+        // Filtro por Jogo — sanitizado contra injeção de wildcards
         if ($request->filled('game')) {
-            $query->where('game_name', 'like', '%' . $request->input('game') . '%');
+            $safe = str_replace(['%', '_'], ['\%', '\_'], $request->input('game'));
+            $query->where('game_name', 'like', '%' . $safe . '%');
         }
 
-        // Filtro por Suporte a Headshot
+        // Filtro por Headshot
         if ($request->has('has_headshot')) {
             $query->where('has_headshot', filter_var($request->input('has_headshot'), FILTER_VALIDATE_BOOLEAN));
         }
 
-        // Filtro por Tier
-        if ($request->filled('tier')) {
-            $query->where('tier', 'like', '%' . $request->input('tier') . '%');
+        // Filtro por Tier — whitelist de valores aceitos
+        $allowedTiers = ['free', 'pro', 'vip', 'life'];
+        if ($request->filled('tier') && in_array(strtolower($request->input('tier')), $allowedTiers)) {
+            $query->where('tier_required', strtolower($request->input('tier')));
         }
 
-        // Ordenação
-        $sortBy = $request->input('sort_by', 'soberano_score');
-        $sortOrder = $request->input('order', 'desc');
-
+        // Ordenação — apenas colunas permitidas e direção explícita
         $allowedSorts = ['soberano_score', 'fps', 'latency_ms', 'downloads', 'created_at'];
-        if (in_array($sortBy, $allowedSorts)) {
-            // Para latência, menor é melhor (asc)
-            if ($sortBy === 'latency_ms' && !$request->has('order')) {
-                $sortOrder = 'asc';
-            }
-            $query->orderBy($sortBy, $sortOrder);
+        $sortBy    = in_array($request->input('sort_by'), $allowedSorts) ? $request->input('sort_by') : 'soberano_score';
+        $sortOrder = $request->input('order') === 'asc' ? 'asc' : 'desc';
+
+        if ($sortBy === 'latency_ms' && !$request->has('order')) {
+            $sortOrder = 'asc'; // menor latência = melhor
         }
 
-        $models = $query->paginate($request->input('per_page', 50));
+        $query->orderBy($sortBy, $sortOrder);
+
+        // Paginação com teto anti-scraping (máx 24 por página)
+        $perPage = min((int) $request->input('per_page', 12), 24);
+        $models  = $query->paginate($perPage);
 
         return response()->json([
-            'success' => true,
-            'total' => $models->total(),
+            'success'      => true,
+            'total'        => $models->total(),
             'current_page' => $models->currentPage(),
-            'data' => $models->items(),
+            'last_page'    => $models->lastPage(),
+            'data'         => $models->items(),
         ]);
     }
 
