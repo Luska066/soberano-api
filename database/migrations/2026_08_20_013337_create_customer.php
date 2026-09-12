@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('country');
             $table->string('line1');
             $table->string('line2')->nullable();
-            $table->string('city');
+            $table->string('city')->nullable();
             $table->string('state');
             $table->string('postal_code');
             $table->string('id_stripe')->unique()->nullable();

@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Price;
 use App\Models\Product;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -71,7 +72,7 @@ class CustomerController extends Controller
             ->whereNotNull('country')
             ->pluck('country');
 
-        return Inertia::render('customers/index', [
+        return Inertia::render('admin/customers/index', [
             'customers' => $customers,
             'filters' => [
                 'search' => $search,
@@ -99,12 +100,12 @@ class CustomerController extends Controller
             'password' => ['required', 'string', 'min:8', 'max:255'],
             'country_code' => ['required', 'string', 'max:10'],
             'phone' => ['required', 'string', 'max:30'],
-            'country' => ['required', 'string', 'max:100'],
-            'line1' => ['required', 'string', 'max:255'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'line1' => ['nullable', 'string', 'max:255'],
             'line2' => ['nullable', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:100'],
-            'state' => ['required', 'string', 'max:100'],
-            'postal_code' => ['required', 'string', 'max:20'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'postal_code' => ['nullable', 'string', 'max:20'],
         ], [
             'name.required' => 'O campo nome completo é obrigatório.',
             'email.required' => 'O campo email é obrigatório.',
@@ -114,11 +115,6 @@ class CustomerController extends Controller
             'password.min' => 'A senha deve ter no mínimo 8 caracteres.',
             'country_code.required' => 'O campo DDI / Código do país é obrigatório.',
             'phone.required' => 'O campo telefone / celular é obrigatório.',
-            'country.required' => 'O campo país é obrigatório.',
-            'line1.required' => 'O campo endereço / logradouro é obrigatório.',
-            'city.required' => 'O campo cidade é obrigatório.',
-            'state.required' => 'O campo estado / província é obrigatório.',
-            'postal_code.required' => 'O campo CEP / código postal é obrigatório.',
         ]);
 
         $validator->after(function ($validator) use ($request) {
@@ -127,20 +123,22 @@ class CustomerController extends Controller
             $postalCodeInput = $request->input('postal_code');
             $phoneInput = $request->input('phone');
 
-            // 1. Validação do País do Endereço
-            $countryEnum = StripCountrieType::fromValueOrLabel($countryInput);
-            if (!$countryEnum) {
-                $validator->errors()->add(
-                    'country',
-                    'O país selecionado não é válido ou não é suportado pelo Stripe.'
-                );
-            } else {
-                // 2. Validação da máscara e formato do Código Postal / CEP
-                if (!empty($postalCodeInput) && !$countryEnum->validatePostalCode($postalCodeInput)) {
+            // 1. Validação do País do Endereço (se informado)
+            if (!empty($countryInput)) {
+                $countryEnum = StripCountrieType::fromValueOrLabel($countryInput);
+                if (!$countryEnum) {
                     $validator->errors()->add(
-                        'postal_code',
-                        "O formato do código postal é inválido para o país selecionado ({$countryEnum->label()})."
+                        'country',
+                        'O país selecionado não é válido ou não é suportado pelo Stripe.'
                     );
+                } else {
+                    // 2. Validação da máscara e formato do Código Postal / CEP
+                    if (!empty($postalCodeInput) && !$countryEnum->validatePostalCode($postalCodeInput)) {
+                        $validator->errors()->add(
+                            'postal_code',
+                            "O formato do código postal é inválido para o país selecionado ({$countryEnum->label()})."
+                        );
+                    }
                 }
             }
 
@@ -184,12 +182,12 @@ class CustomerController extends Controller
                 'id_user' => $user->id,
                 'phone' => $validated['phone'],
                 'country_code' => $validated['country_code'],
-                'country' => $validated['country'],
-                'line1' => $validated['line1'],
-                'line2' => $validated['line2'],
-                'city' => $validated['city'],
-                'state' => $validated['state'],
-                'postal_code' => $validated['postal_code'],
+                'country' => $validated['country'] ?? null,
+                'line1' => $validated['line1'] ?? null,
+                'line2' => $validated['line2'] ?? null,
+                'city' => $validated['city'] ?? null,
+                'state' => $validated['state'] ?? null,
+                'postal_code' => $validated['postal_code'] ?? null,
             ]);
 
             DB::commit();
@@ -215,12 +213,12 @@ class CustomerController extends Controller
             'password' => ['nullable', 'string', 'min:8', 'max:255'],
             'country_code' => ['required', 'string', 'max:10'],
             'phone' => ['required', 'string', 'max:30'],
-            'country' => ['required', 'string', 'max:100'],
-            'line1' => ['required', 'string', 'max:255'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'line1' => ['nullable', 'string', 'max:255'],
             'line2' => ['nullable', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:100'],
-            'state' => ['required', 'string', 'max:100'],
-            'postal_code' => ['required', 'string', 'max:20'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'postal_code' => ['nullable', 'string', 'max:20'],
         ], [
             'name.required' => 'O campo nome completo é obrigatório.',
             'email.required' => 'O campo email é obrigatório.',
@@ -228,11 +226,6 @@ class CustomerController extends Controller
             'password.min' => 'A nova senha deve ter no mínimo 8 caracteres.',
             'country_code.required' => 'O campo DDI / Código do país é obrigatório.',
             'phone.required' => 'O campo telefone / celular é obrigatório.',
-            'country.required' => 'O campo país é obrigatório.',
-            'line1.required' => 'O campo endereço / logradouro é obrigatório.',
-            'city.required' => 'O campo cidade é obrigatório.',
-            'state.required' => 'O campo estado / província é obrigatório.',
-            'postal_code.required' => 'O campo CEP / código postal é obrigatório.',
         ]);
 
         $validator->after(function ($validator) use ($request) {
@@ -241,20 +234,22 @@ class CustomerController extends Controller
             $postalCodeInput = $request->input('postal_code');
             $phoneInput = $request->input('phone');
 
-            // 1. Validação do País do Endereço
-            $countryEnum = StripCountrieType::fromValueOrLabel($countryInput);
-            if (!$countryEnum) {
-                $validator->errors()->add(
-                    'country',
-                    'O país selecionado não é válido ou não é suportado pelo Stripe.'
-                );
-            } else {
-                // 2. Validação da máscara e formato do Código Postal / CEP
-                if (!empty($postalCodeInput) && !$countryEnum->validatePostalCode($postalCodeInput)) {
+            // 1. Validação do País do Endereço (se informado)
+            if (!empty($countryInput)) {
+                $countryEnum = StripCountrieType::fromValueOrLabel($countryInput);
+                if (!$countryEnum) {
                     $validator->errors()->add(
-                        'postal_code',
-                        "O formato do código postal é inválido para o país selecionado ({$countryEnum->label()})."
+                        'country',
+                        'O país selecionado não é válido ou não é suportado pelo Stripe.'
                     );
+                } else {
+                    // 2. Validação da máscara e formato do Código Postal / CEP
+                    if (!empty($postalCodeInput) && !$countryEnum->validatePostalCode($postalCodeInput)) {
+                        $validator->errors()->add(
+                            'postal_code',
+                            "O formato do código postal é inválido para o país selecionado ({$countryEnum->label()})."
+                        );
+                    }
                 }
             }
 
@@ -294,24 +289,22 @@ class CustomerController extends Controller
                     $customer->user->password = Hash::make($validated['password']);
                 }
                 $customer->user->save();
-            }
+                DB::commit();
+                $customer->user->updateStripeCustomer([
+                    'phone' => $customer->phone,
+                    'metadata' => [
+                        'customer_id' => $customer->uuid,
+                        'name' => $customer->user->name,
+                        'email' => $customer->user->email,
+                        'phone' => $customer->phone
+                    ],
 
-            $countryEnum = StripCountrieType::fromValueOrLabel($validated['country']);
-            $customer->country = $validated['country'];
-            $customer->line1 = $validated['line1'];
-            $customer->line2 = $validated['line2'] ?? null;
-            $customer->city = $validated['city'];
-            $customer->state = $validated['state'];
-            $customer->postal_code = $validated['postal_code'];
-            $customer->phone = $validated['phone'];
-            $customer->country_code = $countryEnum?->ddi();
-            $customer->save();
-            DB::commit();
+                ]);
+            }
 
             return redirect()->back()->with('success', 'Cliente atualizado com sucesso!');
         } catch (\Throwable $e) {
             DB::rollBack();
-            dd($e->getMessage(), $e->getLine(), $e->getFile());
             return redirect()->back()
                 ->withErrors(['general' => 'Ocorreu um erro ao atualizar o cliente: ' . $e->getMessage()])
                 ->withInput();
@@ -453,7 +446,7 @@ class CustomerController extends Controller
                         'total' => $inv->total(),
                         'raw_total' => $inv->rawTotal() / 100,
                         'subtotal' => $inv->subtotal(),
-                        'raw_subtotal' => $inv->rawSubtotal() / 100,
+                        'raw_subtotal' => $stripeInvoice->subtotal ? $stripeInvoice->subtotal / 100 : 0,
                         'tax' => $inv->tax(),
                         'amount_due' => $stripeInvoice->amount_due ? $stripeInvoice->amount_due / 100 : 0,
                         'amount_paid' => $stripeInvoice->amount_paid ? $stripeInvoice->amount_paid / 100 : 0,
@@ -524,7 +517,7 @@ class CustomerController extends Controller
             ->whereNotNull('id_stripe')
             ->get();
 
-        return Inertia::render('customers/show', [
+        return Inertia::render('admin/customers/show', [
             'customer' => $customer,
             'stripeCustomer' => $stripeCustomerData,
             'subscriptions' => $stripeSubscriptions,
@@ -544,8 +537,6 @@ class CustomerController extends Controller
     {
         $validated = $request->validate([
             'price_id' => ['required', 'string'],
-            'type' => ['nullable', 'string'],
-            'trial_days' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $user = $customer->user;
@@ -553,19 +544,20 @@ class CustomerController extends Controller
             return redirect()->back()->withErrors(['general' => 'Usuário associado ao cliente não encontrado.']);
         }
 
-        $type = !empty($validated['type']) ? $validated['type'] : 'default';
+        $type = 'default';
         $priceId = $validated['price_id'];
         $trialDays = $validated['trial_days'] ?? null;
 
         try {
             if (! $user->hasStripeId()) {
-                $user->createAsStripeCustomer([
-                    'phone' => $customer->phone,
-                    'name' => $user->name,
-                    'email' => $user->email,
+                throw new Exception('Cliente não tem ID no Stripe, não é possivel criar assinatura');
+            }
+
+            // Garante que o cliente só pode ter uma assinatura ativa
+            if ($user->subscribed($type) || $customer->activeSubscriptions()->isNotEmpty()) {
+                return redirect()->back()->withErrors([
+                    'general' => 'Este cliente já possui uma assinatura ativa. Cada cliente pode ter apenas uma assinatura. Use a opção "Trocar Plano" para alterá-la.'
                 ]);
-                $customer->id_stripe = $user->stripe_id;
-                $customer->saveQuietly();
             }
 
             $builder = $user->newSubscription($type, $priceId);
@@ -593,6 +585,66 @@ class CustomerController extends Controller
     }
 
     /**
+     * Swap/change the customer's subscription plan.
+     */
+    public function swapSubscription(Request $request, Customer $customer, string $subscriptionId): RedirectResponse
+    {
+        $validated = $request->validate([
+            'price_id' => ['required', 'string'],
+        ]);
+
+        $newPriceId = $validated['price_id'];
+
+        try {
+            $secret = config('cashier.secret') ?? env('STRIPE_SECRET');
+            $stripe = $secret ? new StripeClient($secret) : null;
+
+            // 1. Atualiza no Stripe
+            if ($stripe) {
+                $stripeSub = $stripe->subscriptions->retrieve($subscriptionId);
+                $itemId = $stripeSub->items->data[0]->id ?? null;
+
+                if ($itemId) {
+                    $stripe->subscriptions->update($subscriptionId, [
+                        'items' => [
+                            [
+                                'id' => $itemId,
+                                'price' => $newPriceId,
+                            ],
+                        ],
+                        'proration_behavior' => 'create_prorations',
+                        'cancel_at_period_end' => false,
+                    ]);
+                }
+            }
+
+            // 2. Atualiza no banco de dados local
+            $subscription = $customer->subscriptions()->where('subscriptions.stripe_id', $subscriptionId)->first();
+            if ($subscription) {
+                $subscription->stripe_price = $newPriceId;
+                $subscription->ends_at = null;
+                $subscription->stripe_status = 'active';
+                $subscription->save();
+
+                $item = $subscription->items()->first();
+                if ($item) {
+                    $item->stripe_price = $newPriceId;
+                    $item->save();
+                }
+            }
+
+            return redirect()->back()->with('success', 'Plano da assinatura alterado com sucesso!');
+        } catch (\Throwable $e) {
+            Log::error('Erro ao trocar plano da assinatura: ' . $e->getMessage(), [
+                'subscription_id' => $subscriptionId,
+                'price_id' => $newPriceId,
+            ]);
+
+            return redirect()->back()->withErrors(['general' => 'Erro ao trocar plano: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * Cancel customer subscription.
      */
     public function cancelSubscription(Request $request, Customer $customer, string $subscriptionId): RedirectResponse
@@ -600,31 +652,40 @@ class CustomerController extends Controller
         $cancelNow = $request->boolean('cancel_now', false);
 
         try {
-            // Busca local ou pelo Stripe ID
-            $subscription = $customer->subscriptions()->where('stripe_id', $subscriptionId)->first();
+            $secret = config('cashier.secret') ?? env('STRIPE_SECRET');
+            $stripe = $secret ? new StripeClient($secret) : null;
 
-            if ($subscription) {
+            // 1. Atualiza no Stripe
+            $stripeSub = null;
+            if ($stripe) {
                 if ($cancelNow) {
-                    $subscription->cancelNow();
+                    $stripeSub = $stripe->subscriptions->cancel($subscriptionId);
                 } else {
-                    $subscription->cancel();
-                }
-            } else {
-                // Cancelar direto via Stripe API se não estiver na tabela local
-                $secret = config('cashier.secret') ?? env('STRIPE_SECRET');
-                if ($secret) {
-                    $stripe = new StripeClient($secret);
-                    if ($cancelNow) {
-                        $stripe->subscriptions->cancel($subscriptionId);
-                    } else {
-                        $stripe->subscriptions->update($subscriptionId, [
-                            'cancel_at_period_end' => true,
-                        ]);
-                    }
+                    $stripeSub = $stripe->subscriptions->update($subscriptionId, [
+                        'cancel_at_period_end' => true,
+                    ]);
                 }
             }
 
-            $msg = $cancelNow ? 'Assinatura cancelada imediatamente.' : 'Assinatura configurada para cancelar ao final do período atual.';
+            // 2. Atualiza no banco de dados local
+            $subscription = $customer->subscriptions()->where('subscriptions.stripe_id', $subscriptionId)->first();
+            if ($subscription) {
+                if ($cancelNow) {
+                    $subscription->ends_at = now();
+                    $subscription->stripe_status = 'canceled';
+                } else {
+                    $subscription->ends_at = isset($stripeSub->current_period_end)
+                        ? Carbon::createFromTimestamp($stripeSub->current_period_end)
+                        : ($subscription->ends_at ?? now());
+                    $subscription->stripe_status = $stripeSub->status ?? $subscription->stripe_status;
+                }
+                $subscription->save();
+            }
+
+            $msg = $cancelNow
+                ? 'Assinatura cancelada imediatamente no Stripe e no sistema.'
+                : 'Assinatura configurada para cancelar ao final do período atual no Stripe e no sistema.';
+
             return redirect()->back()->with('success', $msg);
         } catch (\Throwable $e) {
             Log::error('Erro ao cancelar assinatura: ' . $e->getMessage(), ['subscription_id' => $subscriptionId]);
@@ -638,22 +699,26 @@ class CustomerController extends Controller
     public function resumeSubscription(Request $request, Customer $customer, string $subscriptionId): RedirectResponse
     {
         try {
-            $subscription = $customer->subscriptions()->where('stripe_id', $subscriptionId)->first();
+            $secret = config('cashier.secret') ?? env('STRIPE_SECRET');
+            $stripe = $secret ? new StripeClient($secret) : null;
 
-            if ($subscription && $subscription->onGracePeriod()) {
-                $subscription->resume();
-            } else {
-                // Retomar via Stripe API
-                $secret = config('cashier.secret') ?? env('STRIPE_SECRET');
-                if ($secret) {
-                    $stripe = new StripeClient($secret);
-                    $stripe->subscriptions->update($subscriptionId, [
-                        'cancel_at_period_end' => false,
-                    ]);
-                }
+            // 1. Atualiza no Stripe
+            $stripeSub = null;
+            if ($stripe) {
+                $stripeSub = $stripe->subscriptions->update($subscriptionId, [
+                    'cancel_at_period_end' => false,
+                ]);
             }
 
-            return redirect()->back()->with('success', 'Assinatura retomada com sucesso!');
+            // 2. Atualiza no banco de dados local
+            $subscription = $customer->subscriptions()->where('subscriptions.stripe_id', $subscriptionId)->first();
+            if ($subscription) {
+                $subscription->ends_at = null;
+                $subscription->stripe_status = $stripeSub->status ?? 'active';
+                $subscription->save();
+            }
+
+            return redirect()->back()->with('success', 'Assinatura retomada com sucesso no Stripe e no sistema!');
         } catch (\Throwable $e) {
             Log::error('Erro ao retomar assinatura: ' . $e->getMessage(), ['subscription_id' => $subscriptionId]);
             return redirect()->back()->withErrors(['general' => 'Erro ao retomar assinatura: ' . $e->getMessage()]);
@@ -666,20 +731,20 @@ class CustomerController extends Controller
     public function syncStripe(Customer $customer): RedirectResponse
     {
         try {
-            if ($customer->user) {
-                if (!$customer->user->hasStripeId()) {
-                    $customer->user->createAsStripeCustomer([
-                        'phone' => $customer->phone,
-                        'name' => $customer->user->name,
-                        'email' => $customer->user->email,
-                    ]);
-                } else {
-                    $customer->user->syncStripeCustomerDetails();
-                }
+            // if ($customer->user) {
+            //     if (!$customer->user->hasStripeId()) {
+            //         $customer->user->createAsStripeCustomer([
+            //             'phone' => $customer->phone,
+            //             'name' => $customer->user->name,
+            //             'email' => $customer->user->email,
+            //         ]);
+            //     } else {
+            //         $customer->user->syncStripeCustomerDetails();
+            //     }
 
-                $customer->id_stripe = $customer->user->stripe_id;
-                $customer->saveQuietly();
-            }
+            //     $customer->id_stripe = $customer->user->stripe_id;
+            //     $customer->saveQuietly();
+            // }
 
             return redirect()->back()->with('success', 'Dados do cliente sincronizados com o Stripe com sucesso!');
         } catch (\Throwable $e) {

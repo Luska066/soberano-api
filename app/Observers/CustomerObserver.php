@@ -19,14 +19,6 @@ class CustomerObserver
                 'name' => $customer->user->name,
                 'email' => $customer->user->email,
             ],
-            'address' => [
-                'line1' => $customer->line1,
-                'line2' => $customer->line2,
-                'city' => $customer->city,
-                'state' => $customer->state,
-                'postal_code' => $customer->postal_code,
-                'country' => $customer->country,
-            ]
         ]);
     }
 
@@ -35,30 +27,7 @@ class CustomerObserver
      */
     public function updated(Customer $customer): void
     {
-        if ($customer->user->stripe_id == null) {
-            $customer->user->stripe_id = $customer->id_stripe;
-            $customer->user->save();
-        }
 
-        $customer->user->updateStripeCustomer([
-            'phone' => $customer->phone,
-            'name' => $customer->user->name,
-            'email' => $customer->user->email,
-            'metadata' => [
-                'customer_id' => $customer->uuid,
-                'name' => $customer->user->name,
-                'email' => $customer->user->email,
-                'phone' => $customer->phone
-            ],
-            'address' => [
-                'line1' => $customer->line1,
-                'line2' => $customer->line2,
-                'city' => $customer->city,
-                'state' => $customer->state,
-                'postal_code' => $customer->postal_code,
-                'country' => $customer->country,
-            ]
-        ]);
     }
 
     /**

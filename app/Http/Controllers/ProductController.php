@@ -64,7 +64,7 @@ class ProductController extends Controller
         $totalPrices = Price::withTrashed()->count();
         $newThisMonth = Product::where('created_at', '>=', now()->startOfMonth())->count();
 
-        return Inertia::render('products/index', [
+        return Inertia::render('admin/products/index', [
             'products' => $products,
             'filters' => [
                 'search' => $search,

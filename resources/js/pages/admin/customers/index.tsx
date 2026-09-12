@@ -632,20 +632,19 @@ export default function CustomersIndex({
                                                         <div className="flex items-center gap-1.5 text-xs text-white">
                                                             <MapPin className="size-3.5 text-[#c9a227]" />
                                                             <span>
-                                                                {customer.city}
-                                                                {customer.state ? `, ${customer.state}` : ''}
+                                                                {customer.city ? `${customer.city}${customer.state ? `, ${customer.state}` : ''}` : 'Não informado'}
                                                             </span>
                                                         </div>
                                                         <div className="mt-0.5 flex items-center gap-1 text-[11px] text-[#7a84a0]">
                                                             <Globe className="size-3 text-[#4da6d6]" />
-                                                            <span>{customer.country_label || getCountryLabel(customer.country)}</span>
+                                                            <span>{customer.country ? (customer.country_label || getCountryLabel(customer.country)) : 'Não informado'}</span>
                                                         </div>
                                                     </td>
 
                                                     {/* Endereço */}
                                                     <td className="px-5 py-4">
                                                         <div className="max-w-[200px] truncate text-xs text-[#e4e6f0]">
-                                                            {customer.line1}
+                                                            {customer.line1 || 'Não informado'}
                                                         </div>
                                                         {customer.line2 && (
                                                             <div className="max-w-[200px] truncate text-[11px] text-[#7a84a0]">
@@ -657,7 +656,7 @@ export default function CustomersIndex({
                                                     {/* CEP */}
                                                     <td className="px-5 py-4">
                                                         <span className="rounded bg-[#07091a] px-2 py-1 font-mono text-xs text-[#c9a227] border border-[#c9a227]/20">
-                                                            {customer.postal_code}
+                                                            {customer.postal_code || '—'}
                                                         </span>
                                                     </td>
 
@@ -752,43 +751,15 @@ export default function CustomersIndex({
                                             );
                                         }
 
-                                        if (isPrev) {
-                                            return (
-                                                <Button
-                                                    key={index}
-                                                    onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="size-8 border-[#c9a227]/20 bg-[#0d1228] p-0 text-[#7a84a0] hover:border-[#c9a227]/50 hover:text-white"
-                                                >
-                                                    <ChevronLeft className="size-4" />
-                                                </Button>
-                                            );
-                                        }
-
-                                        if (isNext) {
-                                            return (
-                                                <Button
-                                                    key={index}
-                                                    onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="size-8 border-[#c9a227]/20 bg-[#0d1228] p-0 text-[#7a84a0] hover:border-[#c9a227]/50 hover:text-white"
-                                                >
-                                                    <ChevronRight className="size-4" />
-                                                </Button>
-                                            );
-                                        }
-
                                         return (
                                             <Button
                                                 key={index}
-                                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                                variant="outline"
+                                                onClick={() => link.url && router.visit(link.url)}
+                                                variant={link.active ? 'default' : 'outline'}
                                                 size="sm"
-                                                className={`size-8 font-mono text-xs ${link.active
-                                                    ? 'border-[#c9a227] bg-[#c9a227]/20 text-[#c9a227] shadow-[0_0_10px_rgba(201,162,39,0.3)]'
-                                                    : 'border-[#c9a227]/15 bg-[#0d1228] text-[#7a84a0] hover:border-[#c9a227]/40 hover:text-white'
+                                                className={`size-8 p-0 font-rajdhani text-xs font-bold ${link.active
+                                                        ? 'border-[#c9a227] bg-[#c9a227] text-[#07091a] hover:bg-[#a87d15]'
+                                                        : 'border-white/10 bg-white/5 text-[#7a84a0] hover:text-white'
                                                     }`}
                                             >
                                                 {cleanLabel}
@@ -944,20 +915,19 @@ export default function CustomersIndex({
 
                         <div className="rounded-lg border border-[#c9a227]/15 bg-[#07091a]/60 p-3">
                             <h4 className="mb-3 font-rajdhani text-xs font-bold uppercase tracking-wider text-[#c9a227]">
-                                Endereço & Localização
+                                Endereço & Localização (Opcional)
                             </h4>
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
-                                    <Label className="text-xs text-[#7a84a0]">País *</Label>
+                                    <Label className="text-xs text-[#7a84a0]">País (Opcional)</Label>
                                     {stripeCountries.length > 0 ? (
                                         <select
-                                            required
                                             value={createForm.data.country}
                                             onChange={(e) => handleCreateCountryChange(e.target.value)}
                                             className="mt-1 flex h-9 w-full rounded-md border border-[#c9a227]/20 bg-[#0d1228] px-3 font-sans text-sm text-white focus:border-[#c9a227]/60 focus:outline-none"
                                         >
-                                            <option value="" disabled>
-                                                Selecione um país
+                                            <option value="">
+                                                Selecione um país (opcional)
                                             </option>
                                             {stripeCountries.map((c) => (
                                                 <option key={`create-country-${c.value}`} value={c.value} className="bg-[#0d1228] text-white">
@@ -967,7 +937,6 @@ export default function CustomersIndex({
                                         </select>
                                     ) : (
                                         <Input
-                                            required
                                             placeholder="Ex: Brasil ou BR"
                                             value={createForm.data.country}
                                             onChange={(e) => createForm.setData('country', e.target.value)}
@@ -983,7 +952,7 @@ export default function CustomersIndex({
 
                                 <div>
                                     <div className="flex items-center justify-between">
-                                        <Label className="text-xs text-[#7a84a0]">CEP / Código Postal *</Label>
+                                        <Label className="text-xs text-[#7a84a0]">CEP / Código Postal (Opcional)</Label>
                                         {selectedCreateCountry && (
                                             <span className="font-mono text-[10px] text-[#c9a227]">
                                                 {selectedCreateCountry.value}
@@ -991,7 +960,6 @@ export default function CustomersIndex({
                                         )}
                                     </div>
                                     <Input
-                                        required
                                         placeholder={getPostalCodePlaceholder(createForm.data.country)}
                                         value={createForm.data.postal_code}
                                         onChange={(e) =>
@@ -1022,9 +990,8 @@ export default function CustomersIndex({
                                 </div>
 
                                 <div className="sm:col-span-2">
-                                    <Label className="text-xs text-[#7a84a0]">Endereço (Linha 1) *</Label>
+                                    <Label className="text-xs text-[#7a84a0]">Endereço (Linha 1) (Opcional)</Label>
                                     <Input
-                                        required
                                         placeholder="Rua, Av, Número"
                                         value={createForm.data.line1}
                                         onChange={(e) => createForm.setData('line1', e.target.value)}
@@ -1048,9 +1015,8 @@ export default function CustomersIndex({
                                 </div>
 
                                 <div>
-                                    <Label className="text-xs text-[#7a84a0]">Cidade *</Label>
+                                    <Label className="text-xs text-[#7a84a0]">Cidade (Opcional)</Label>
                                     <Input
-                                        required
                                         placeholder="São Paulo"
                                         value={createForm.data.city}
                                         onChange={(e) => createForm.setData('city', e.target.value)}
@@ -1064,9 +1030,8 @@ export default function CustomersIndex({
                                 </div>
 
                                 <div>
-                                    <Label className="text-xs text-[#7a84a0]">Estado / UF *</Label>
+                                    <Label className="text-xs text-[#7a84a0]">Estado / UF (Opcional)</Label>
                                     <Input
-                                        required
                                         placeholder="SP"
                                         value={createForm.data.state}
                                         onChange={(e) => createForm.setData('state', e.target.value)}
@@ -1240,20 +1205,19 @@ export default function CustomersIndex({
 
                         <div className="rounded-lg border border-[#c9a227]/15 bg-[#07091a]/60 p-3">
                             <h4 className="mb-3 font-rajdhani text-xs font-bold uppercase tracking-wider text-[#c9a227]">
-                                Endereço & Localização
+                                Endereço & Localização (Opcional)
                             </h4>
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
-                                    <Label className="text-xs text-[#7a84a0]">País *</Label>
+                                    <Label className="text-xs text-[#7a84a0]">País (Opcional)</Label>
                                     {stripeCountries.length > 0 ? (
                                         <select
-                                            required
-                                            value={editForm.data.country}
+                                            value={editForm.data.country || ''}
                                             onChange={(e) => handleEditCountryChange(e.target.value)}
                                             className="mt-1 flex h-9 w-full rounded-md border border-[#c9a227]/20 bg-[#0d1228] px-3 font-sans text-sm text-white focus:border-[#c9a227]/60 focus:outline-none"
                                         >
-                                            <option value="" disabled>
-                                                Selecione um país
+                                            <option value="">
+                                                Selecione um país (opcional)
                                             </option>
                                             {stripeCountries.map((c) => (
                                                 <option key={`edit-country-${c.value}`} value={c.value} className="bg-[#0d1228] text-white">
@@ -1263,7 +1227,6 @@ export default function CustomersIndex({
                                         </select>
                                     ) : (
                                         <Input
-                                            required
                                             value={editForm.data.country}
                                             onChange={(e) => editForm.setData('country', e.target.value)}
                                             className="mt-1 border-[#c9a227]/20 bg-[#0d1228] text-sm text-white"
@@ -1278,7 +1241,7 @@ export default function CustomersIndex({
 
                                 <div>
                                     <div className="flex items-center justify-between">
-                                        <Label className="text-xs text-[#7a84a0]">CEP / Código Postal *</Label>
+                                        <Label className="text-xs text-[#7a84a0]">CEP / Código Postal (Opcional)</Label>
                                         {selectedEditCountry && (
                                             <span className="font-mono text-[10px] text-[#c9a227]">
                                                 {selectedEditCountry.value}
@@ -1286,7 +1249,6 @@ export default function CustomersIndex({
                                         )}
                                     </div>
                                     <Input
-                                        required
                                         placeholder={getPostalCodePlaceholder(editForm.data.country)}
                                         value={editForm.data.postal_code}
                                         onChange={(e) =>
@@ -1317,9 +1279,8 @@ export default function CustomersIndex({
                                 </div>
 
                                 <div className="sm:col-span-2">
-                                    <Label className="text-xs text-[#7a84a0]">Endereço (Linha 1) *</Label>
+                                    <Label className="text-xs text-[#7a84a0]">Endereço (Linha 1) (Opcional)</Label>
                                     <Input
-                                        required
                                         value={editForm.data.line1}
                                         onChange={(e) => editForm.setData('line1', e.target.value)}
                                         className="mt-1 border-[#c9a227]/20 bg-[#0d1228] text-sm text-white"
@@ -1336,9 +1297,8 @@ export default function CustomersIndex({
                                 </div>
 
                                 <div>
-                                    <Label className="text-xs text-[#7a84a0]">Cidade *</Label>
+                                    <Label className="text-xs text-[#7a84a0]">Cidade (Opcional)</Label>
                                     <Input
-                                        required
                                         value={editForm.data.city}
                                         onChange={(e) => editForm.setData('city', e.target.value)}
                                         className="mt-1 border-[#c9a227]/20 bg-[#0d1228] text-sm text-white"
@@ -1346,9 +1306,8 @@ export default function CustomersIndex({
                                 </div>
 
                                 <div>
-                                    <Label className="text-xs text-[#7a84a0]">Estado / UF *</Label>
+                                    <Label className="text-xs text-[#7a84a0]">Estado / UF (Opcional)</Label>
                                     <Input
-                                        required
                                         value={editForm.data.state}
                                         onChange={(e) => editForm.setData('state', e.target.value)}
                                         className="mt-1 border-[#c9a227]/20 bg-[#0d1228] text-sm text-white"

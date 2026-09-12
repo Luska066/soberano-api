@@ -306,7 +306,7 @@ enum StripCountrieType: string
 
             self::BD => '^\d{4}$',                              // Formato: 1000 (NNNN - 4 dígitos)
             self::BE => '^\d{4}$',                              // Formato: 1000 (NNNN - 4 dígitos)
-            self::BR => '^\d{5}-?\d{3}$',                       // Formato: 01310-100 ou 01310100 (NNNNN-NNN ou NNNNNNNN)
+            self::BR => '^\d{5}-?\d{4}$',                       // Formato: 01310-100 ou 01310100 (NNNNN-NNN ou NNNNNNNN)
             self::BG => '^\d{4}$',                              // Formato: 1000 (NNNN - 4 dígitos)
 
             self::CA => '^[A-Za-z]\d[A-Za-z][ ]?\d[A-Za-z]\d$', // Formato: K1A 0B1 ou K1A0B1 (ANA NAN)
